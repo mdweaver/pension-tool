@@ -18,6 +18,7 @@ A web tool for research assistants (RAs) to transcribe Union Navy pension files 
 | `data_dictionary.csv` | — | Every field: label, type, codes, old Union Army variable, coding instructions. |
 | `tools/`, `test/`, `schema.lock.json` | GitHub Actions / your machine | The checks (see "Checks before deploying"). |
 | `CLAUDE.md`, `AGENTS.md` | — | Rules for anyone, including AI agents, changing this repo. |
+| `docs/GUIDE.md` | — | Developer guide: how it works, a map of every file, the record format, and how to make common changes. |
 
 **Database tables**
 

@@ -2,6 +2,10 @@
 
 Read this before changing anything. It is the data-entry tool research assistants use to transcribe Union Navy pension files; the data is live research data in Supabase.
 
+Background, the live setup, a map of every file, the record format, and how-tos are in the developer guide, imported here so it loads with this file:
+
+@docs/GUIDE.md
+
 ## How it fits together
 
 - **Site** (`index.html`, `css/`, `js/`, `config.js`): static, no build step, published to GitHub Pages **only** by `.github/workflows/deploy.yml` after its checks pass.

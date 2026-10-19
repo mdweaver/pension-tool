@@ -1,6 +1,6 @@
 # Agent instructions
 
-Read [CLAUDE.md](CLAUDE.md) before making any change. It applies to every AI coding agent and to people.
+Read [CLAUDE.md](CLAUDE.md) (the rules) and [docs/GUIDE.md](docs/GUIDE.md) (background, file map, record format, how-tos) before making any change. They apply to every AI coding agent and to people.
 
 The short version:
 - Never rename or remove field keys or block ids in `js/schema.js`, and run `node tools/update.js` after any change to it.
