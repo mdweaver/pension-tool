@@ -3,3 +3,10 @@ supabase/.temp/
 supabase/.branches/
 .env
 node_modules/
+
+# backups and keys: never commit
+*.age
+*.tar.gz
+pension-backup-key*.txt
+restore/
+backup-out/

@@ -1,7 +1,10 @@
 -- Minimal imitation of the Supabase environment, for testing migrations locally.
 do $$ begin if not exists (select from pg_roles where rolname = 'anon') then create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls; end if; end $$;
 create schema auth;
-create table auth.users (id uuid primary key default gen_random_uuid(), email text, raw_user_meta_data jsonb default '{}'::jsonb);
+create table auth.users (id uuid primary key default gen_random_uuid(), email text, encrypted_password text,
+  email_confirmed_at timestamptz, raw_user_meta_data jsonb default '{}'::jsonb, created_at timestamptz default now());
+create table auth.identities (id uuid primary key default gen_random_uuid(), user_id uuid references auth.users (id) on delete cascade,
+  provider text not null default 'email', provider_id text, identity_data jsonb, created_at timestamptz default now());
 -- same definition Supabase uses: works with psql tests (claim.sub) and with PostgREST (jwt.claims json)
 create function auth.uid() returns uuid language sql stable as $$
   select coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''),

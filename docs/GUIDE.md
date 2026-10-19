@@ -20,6 +20,7 @@ Users are a few RAs and two PIs (admins). There are hundreds to low thousands of
 | Supabase settings | Data API on; "Automatically expose new tables" **off** (hence explicit grants); automatic RLS on; **public sign-up off**; email/password sign-in on. No custom SMTP, so invitation and reset emails aren't used. |
 | GitHub secrets | `SUPABASE_ACCESS_TOKEN` (scoped to this project, expires; see README), `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`. |
 | Accounts | Created by an admin in the Supabase dashboard (Authentication → Users → Add user, auto-confirm), then switched on in the tool's **Team & activity** page. PIs are admins. |
+| Backups | Nightly, encrypted with `age` for the keys in `backup/recipients.txt`; 30-day artifacts plus the `backup-latest` release (indefinite). Secret `SUPABASE_DB_URL` (session pooler). See `docs/BACKUPS.md`. |
 | Commit email | Commits use the GitHub noreply address (`10960653+mdweaver@users.noreply.github.com`). Pushes signed with the private email are blocked by GitHub. |
 
 ## How it works
@@ -65,6 +66,10 @@ Supabase ── Auth (email + password) ── Data API (PostgREST) ── Postg
 | `test/assertions.sql` | 28 database rules, each failing loudly (`testkit.ok` / `testkit.fails`). |
 | `test/run_sql_tests.sh` | Builds throwaway databases (expose off and on), applies the migrations, runs the assertions. `--walkthrough` also runs `test/run_tests.sql`, a readable tour. |
 | `.github/workflows/deploy.yml` | Runs `checks` → `deploy-db` (only if migrations changed, or forced) → `deploy-site` (publishes only `index.html`, `config.js`, `css/`, `js/`). Pull requests run the checks only. |
+| `.github/workflows/backup.yml` | Nightly: dump (PostgreSQL 17 in Docker) → test-restore → guard against data loss → encrypt → 30-day artifact → replace the `backup-latest` release. |
+| `tools/backup.sh` / `tools/verify_backup.sh` / `tools/backup_guard.js` / `tools/restore.sh` | Make a backup folder; prove it restores (counts and checksums); refuse to replace `backup-latest` after a big drop; restore into the same project or (`--with-auth`) a new one. |
+| `backup/recipients.txt` | Public `age` keys that can decrypt backups. Public keys only. |
+| `docs/BACKUPS.md` | Backup setup, restore steps and troubleshooting. |
 | `.github/workflows/supabase-keepalive.yml` | Pings `keepalive_ping()` every 3 days, and makes a monthly timestamp commit so GitHub keeps the schedule enabled. |
 | `README.md` | For the PIs: setup, adding RAs, tracking edits, R access, security notes. |
 | `CLAUDE.md` / `AGENTS.md` | Rules for anyone changing the repo, including AI agents. |
@@ -156,6 +161,10 @@ This creates a new history version per record, with `updated_by` null because it
 - Use `supabase/.temp/` for throwaway scripts; it's ignored by git.
 - Verify live behaviour with the publishable key only: the keep-alive ping, and signed-out requests that should be refused. Never sign in as a real person, and never create test records on the live project without deleting them.
 - Before saying a change works, run the three checks. To test against real PostgREST locally, run PostgREST against a stubbed database (`test/supabase_stub.sql` + migrations) with a small auth stand-in. This was done during development, but that harness isn't kept in the repo.
+
+## Backups
+
+See `docs/BACKUPS.md`. The scripts name the app's tables explicitly (`profiles`, `records`, `record_versions`, `keepalive`). If a migration adds a table that holds data, add it to the `truncate` in `tools/restore.sh`, and to the checks in `tools/verify_backup.sh` if it matters. `public_data.sql` picks up new tables automatically. Test with a local backup → verify → restore cycle: `DB_URL=<scratch db> bash tools/backup.sh out && bash tools/verify_backup.sh out <scratch admin url>`.
 
 ## Open decisions
 

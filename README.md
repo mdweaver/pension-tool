@@ -14,6 +14,7 @@ A web tool for research assistants (RAs) to transcribe Union Navy pension files 
 | `config.js` | GitHub Pages | Your Supabase URL and public key. Both are safe to publish. |
 | `supabase/migrations/*.sql` | Supabase | Tables, permission rules and history triggers. Applied by a GitHub Action. |
 | `.github/workflows/deploy.yml` | GitHub Actions | On every push to `main`: runs the checks, then applies new migrations, then publishes the site. Nothing deploys if a check fails. Pull requests get the checks only. |
+| `.github/workflows/backup.yml` | GitHub Actions | Nightly encrypted backup: kept 30 days as an artifact, plus the latest good one in the `backup-latest` release. See `docs/BACKUPS.md`. |
 | `.github/workflows/supabase-keepalive.yml` | GitHub Actions | Pings the database every 3 days so a free project isn't paused. |
 | `data_dictionary.csv` | — | Every field: label, type, codes, old Union Army variable, coding instructions. |
 | `tools/`, `test/`, `schema.lock.json` | GitHub Actions / your machine | The checks (see "Checks before deploying"). |
@@ -78,7 +79,7 @@ To remove someone, untick **Active**. Their history stays. To reset a forgotten 
 
 Free Supabase projects pause after about a week without activity. `supabase-keepalive.yml` pings every 3 days using the URL and key in `config.js`, so it needs no extra setup. Run it once by hand (**Actions → Supabase keep-alive → Run workflow**) to check. It also commits a one-line timestamp on the 1st of each month, because GitHub switches off scheduled workflows in repos with no commits for 60 days. On a paid plan, delete this workflow.
 
-The free plan also has **no automatic backups**. For the project's real data, the Pro plan ($25/month) adds daily backups and never pauses. Otherwise, export regularly (Records → Export all → JSON) and keep the files in Dropbox or Drive.
+**Backups:** the free plan has none of its own, so `.github/workflows/backup.yml` makes an encrypted backup every night. Each is kept 30 days, and the most recent good one is kept indefinitely. Setup (a key for each PI and one secret) and restoring are in [docs/BACKUPS.md](docs/BACKUPS.md). The Pro plan ($25/month) would add Supabase's own daily backups and stop the pausing.
 
 ## Using it (RAs)
 

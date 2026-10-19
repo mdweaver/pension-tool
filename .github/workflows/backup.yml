@@ -1,0 +1,111 @@
+# Nightly encrypted backup of the Supabase database.
+#  - Each night's backup is kept as a workflow artifact for 30 days.
+#  - The most recent GOOD backup is also kept, indefinitely, in the release "backup-latest".
+#    It is only replaced after the new backup (a) restores cleanly into a throwaway database and
+#    (b) shows no sign of data loss compared with the previous one (tools/backup_guard.js).
+#  - Backups are encrypted with the public keys in backup/recipients.txt (age). Only the holders of
+#    the matching private keys can read them; GitHub never has those keys.
+# Needs the repository secret SUPABASE_DB_URL (session pooler connection string). See docs/BACKUPS.md.
+name: Nightly backup
+
+on:
+  schedule:
+    - cron: '23 10 * * *'   # 10:23 UTC = 03:23 Vancouver (summer) / 02:23 (winter)
+  workflow_dispatch:
+    inputs:
+      allow_shrink:
+        description: 'Replace backup-latest even if records or history shrank (only after an intended large deletion)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # to update the backup-latest release
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    services:
+      scratch:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      GH_TOKEN: ${{ github.token }}
+      PG_IMAGE: postgres:17
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check setup
+        run: |
+          if [ -z "$DB_URL" ]; then echo "::error::Repository secret SUPABASE_DB_URL is not set (see docs/BACKUPS.md)."; exit 1; fi
+          if ! grep -q '^age1' backup/recipients.txt 2>/dev/null; then echo "::error::backup/recipients.txt has no age public key (see docs/BACKUPS.md)."; exit 1; fi
+
+      - name: Install age
+        run: |
+          curl -sSL -o age.tgz https://github.com/FiloSottile/age/releases/download/v1.2.1/age-v1.2.1-linux-amd64.tar.gz
+          tar -xzf age.tgz && sudo install age/age /usr/local/bin/age && rm -rf age age.tgz
+          age --version
+
+      - name: Dump the database (PostgreSQL 17 tools)
+        run: |
+          mkdir backup-out
+          docker run --rm --network host --user "$(id -u):$(id -g)" -e HOME=/tmp -e DB_URL -e GITHUB_SHA \
+            -v "$PWD:/w" -w /w "$PG_IMAGE" bash tools/backup.sh backup-out
+
+      - name: Test-restore into a throwaway database
+        run: |
+          docker run --rm --network host --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -v "$PWD:/w" -w /w "$PG_IMAGE" bash tools/verify_backup.sh backup-out "postgres://postgres:postgres@localhost:5432/postgres"
+
+      - name: Compare with the previous good backup
+        env:
+          ALLOW: ${{ inputs.allow_shrink && '--allow-shrink' || '' }}
+        run: |
+          if gh release download backup-latest --pattern manifest.json --output prev-manifest.json 2>/dev/null; then
+            node tools/backup_guard.js prev-manifest.json backup-out/manifest.json $ALLOW
+          else
+            echo "No previous backup: this will be the first."
+          fi
+
+      - name: Encrypt
+        run: |
+          STAMP=$(date -u +%Y%m%d-%H%M)
+          FILE="pension-backup-$STAMP.tar.gz.age"
+          tar -C backup-out -czf - . | age -R backup/recipients.txt -o "$FILE"
+          cp backup-out/manifest.json manifest.json
+          rm -rf backup-out
+          echo "FILE=$FILE" >> "$GITHUB_ENV"
+          ls -l "$FILE"
+
+      - name: Keep tonight's backup for 30 days
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.FILE }}
+          path: ${{ env.FILE }}
+          retention-days: 30
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Replace backup-latest (kept indefinitely)
+        run: |
+          if ! gh release view backup-latest >/dev/null 2>&1; then
+            gh release create backup-latest --title "Latest database backup" --prerelease --latest=false \
+              --notes "Encrypted. Replaced nightly, only by a verified backup. See docs/BACKUPS.md."
+          fi
+          cp "$FILE" pension-backup-latest.tar.gz.age
+          gh release upload backup-latest pension-backup-latest.tar.gz.age manifest.json --clobber
+          NOTES=$(node -e "const m=require('./manifest.json');console.log('Encrypted database backup, replaced nightly only by a backup that restored cleanly and showed no data loss.\n\nTaken: '+m.created_at+'\nRecords: '+m.records_active+' ('+m.records+' incl. deleted)\nHistory entries: '+m.record_versions+'\nPeople: '+m.profiles+'\nLast save: '+m.last_save+'\nCode version: '+m.git_sha+'\n\nTo restore, see docs/BACKUPS.md.')")
+          gh release edit backup-latest --notes "$NOTES"
+          {
+            echo "### Backup"
+            echo "\`$FILE\`: artifact kept 30 days; also now in release **backup-latest**."
+            echo '```'; cat manifest.json; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

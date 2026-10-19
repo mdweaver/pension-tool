@@ -85,11 +85,13 @@ const tracked = git('ls-files').split('\n').filter(Boolean);
 const secretPatterns = [
   [/sb_secret_[A-Za-z0-9_-]{10,}/, 'Supabase secret key'],
   [/sbp_[A-Za-z0-9]{30,}/, 'Supabase access token'],
-  [/postgres(?:ql)?:\/\/[^\s:@'"]+:[^\s@'"]{6,}@[^\s'"]*supabase/, 'database connection string with password'],
+  [/postgres(?:ql)?:\/\/[^\s:@'"]+:(?![<\[])[^\s@'"<>\[\]]{6,}@[^\s'"]*supabase/, 'database connection string with password'],
   [/-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----/, 'private key'],
-  [/ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}/, 'GitHub token']
+  [/ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}/, 'GitHub token'],
+  [/AGE-SECRET-KEY-1[0-9A-Z]{20,}/, 'private backup key (age; make a new key pair after removing it)']
 ];
 for (const f of tracked) {
+  if (/\.age$|(^|\/)(public_data|auth_data)\.sql$|(^|\/)(records|record_versions|profiles)\.jsonl$/.test(f)) err(`Backup file is committed: ${f}. Backups belong in the workflow artifacts and the backup-latest release, never in the repo.`, f);
   if (/(^|\/)(pension_records_[^/]*|[^/]*_\d{4}-\d{2}-\d{2})\.(json|csv)$/.test(f)) err(`Exported data file is committed: ${f}. Data belongs in Supabase, not the repo. Remove it (git rm --cached).`, f);
   let txt; try { const st = fs.statSync(path.join(ROOT, f)); if (st.size > 2e6) continue; txt = fs.readFileSync(path.join(ROOT, f), 'utf8'); } catch (e) { continue; }
   for (const [re, what] of secretPatterns) if (re.test(txt)) err(`Possible ${what} in ${f}. Remove it and rotate the credential.`, f);

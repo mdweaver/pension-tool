@@ -31,6 +31,7 @@ Background, the live setup, a map of every file, the record format, and how-tos 
 8. **Page code that needs a new database function must ship together with, or after, the migration that creates it.** The workflow applies migrations before publishing the site, so one push with both is fine.
 9. **Don't add a build step, framework, or npm dependency to the site.** It must stay plain files that GitHub Pages serves as-is. Pin any CDN script to an exact version.
 10. **Keep the demo backend in step with the database.** If you change a rule in SQL, change `DemoBackend` to match, so demo mode (and the smoke test) behaves like the live site.
+11. **Backups:** never commit a private backup key (`AGE-SECRET-KEY-…`), a decrypted backup, or any backup file. Only public `age1…` keys go in `backup/recipients.txt`. Never weaken `tools/backup_guard.js` or the test-restore step: they protect the last good backup from being overwritten by a bad one. A new table that holds data must be added to `tools/backup.sh`, `tools/verify_backup.sh` and `tools/restore.sh` (they list tables by name). See `docs/BACKUPS.md`.
 
 ## Before committing
 
