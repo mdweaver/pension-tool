@@ -159,6 +159,7 @@ This creates a new history version per record, with `updated_by` null because it
 
 - **When working on the owner's computer through Claude's remote tools:** writing files into `.github/` is blocked on purpose, because workflows can reach repository secrets. Write workflow files elsewhere (e.g. `github-workflows/`) and ask the owner to move them; don't work around the block. The shell there allows only a few commands (`git`, `python3`, `ls`, `cat`, `mkdir`, …), has no `cd` (use `git -C <path>`), mangles backslashes in inline code (write a script file instead), and **can't push** (no GitHub credentials). Commit, then ask the owner to `git push`.
 - Use `supabase/.temp/` for throwaway scripts; it's ignored by git.
+- **After copying files to the owner's computer, compare checksums of what landed against what was sent, before committing.** A transfer once silently delivered an older copy of a file (the backup key list), and the nightly backup failed because of it.
 - Verify live behaviour with the publishable key only: the keep-alive ping, and signed-out requests that should be refused. Never sign in as a real person, and never create test records on the live project without deleting them.
 - Before saying a change works, run the three checks. To test against real PostgREST locally, run PostgREST against a stubbed database (`test/supabase_stub.sql` + migrations) with a small auth stand-in. This was done during development, but that harness isn't kept in the repo.
 
