@@ -13,10 +13,11 @@ A web tool for research assistants (RAs) to transcribe Union Navy pension files 
 | `index.html`, `css/`, `js/` | GitHub Pages | The form, records list, edit history and team pages. No build step. |
 | `config.js` | GitHub Pages | Your Supabase URL and public key. Both are safe to publish. |
 | `supabase/migrations/*.sql` | Supabase | Tables, permission rules and history triggers. Applied by a GitHub Action. |
-| `.github/workflows/deploy-db.yml` | GitHub Actions | Applies new migrations to Supabase when they change on `main`. |
+| `.github/workflows/deploy.yml` | GitHub Actions | On every push to `main`: runs the checks, then applies new migrations, then publishes the site. Nothing deploys if a check fails. Pull requests get the checks only. |
 | `.github/workflows/supabase-keepalive.yml` | GitHub Actions | Pings the database every 3 days so a free project isn't paused. |
 | `data_dictionary.csv` | — | Every field: label, type, codes, old Union Army variable, coding instructions. |
-| `test/` | your machine | Database tests (see "Testing"). |
+| `tools/`, `test/`, `schema.lock.json` | GitHub Actions / your machine | The checks (see "Checks before deploying"). |
+| `CLAUDE.md`, `AGENTS.md` | — | Rules for anyone, including AI agents, changing this repo. |
 
 **Database tables**
 
@@ -49,10 +50,10 @@ A web tool for research assistants (RAs) to transcribe Union Navy pension files 
 
 1. Push this folder to a GitHub repository.
 2. In the repo, go to **Settings → Secrets and variables → Actions** and add three secrets: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` and `SUPABASE_DB_PASSWORD`.
-3. Go to **Actions → Deploy database changes → Run workflow**. When it's green, your database has the tables (check under Table Editor in Supabase).
+3. Go to **Settings → Pages** and set **Source** to **GitHub Actions**. The workflow, not GitHub, then publishes the site, and only after the checks pass.
+4. Go to **Actions → Check and deploy → Run workflow** (tick *Apply database migrations* the first time). When it's green, the database has its tables and the site is live at `https://<user>.github.io/<repo>/`.
    - No GitHub Action? You can instead paste the four files in `supabase/migrations/` into Supabase's **SQL Editor**, in name order, and run each one.
-4. Edit `config.js` with your Project URL and anon key, then commit.
-5. Go to **Settings → Pages**, set the source to **Deploy from a branch**, branch `main`, folder `/ (root)`. The tool is then live at `https://<user>.github.io/<repo>/`.
+5. Edit `config.js` with your Project URL and anon key, then commit and push. The workflow redeploys the site.
 
 ### 3. Make yourself the first admin
 
@@ -127,19 +128,36 @@ This login is the database owner and bypasses the RA permission rules, so keep t
 
 ## Changing the form
 
-The fields are defined in `js/schema.js` (`SCHEMA`). Add or edit a field there and commit; Pages updates within a minute. Saved records pick up new fields automatically. Removing or renaming a field leaves the old values in the stored JSON, so record renames in a note for the analysis.
+The fields are defined in `js/schema.js` (`SCHEMA`). After editing it, run `node tools/update.js`, which refreshes `schema.lock.json` and `data_dictionary.csv`, and commit all three. Saved records pick up new fields automatically. RAs see the change after the workflow finishes, when they reload the page.
 
-Database changes go in a **new** migration file (e.g. `supabase/migrations/20261101000000_add_x.sql`). Never edit one that has already been applied. Committing it runs the Action.
+- **Safe:** new fields, blocks or codes; new or changed labels, help text, hints, order.
+- **Breaking:** renaming or removing a field key, block or section; switching a block between one-off and repeatable. Saved values would disappear from the form and the exports. `tools/update.js` refuses these. If one is really needed, see `CLAUDE.md` rule 1 (it needs a data migration as well).
 
-## Testing
+Database changes go in a **new** migration file with a later timestamp (e.g. `supabase/migrations/20261101000000_add_x.sql`). Never edit one that has already been applied; the checks block that.
 
-`test/run_sql_tests.sh` builds a throwaway database on any Postgres 15+ server, imitates Supabase's login roles, applies the migrations and runs `test/run_tests.sql`:
+`CLAUDE.md` has the full rules, written so that an AI assistant opening this repo in a new session follows them too.
+
+## Checks before deploying
+
+Every push to `main`, and every pull request, runs three checks in `deploy.yml`. If any fails, nothing is deployed, the live site and database stay as they were, and the run's summary page says what to fix.
+
+| Check | Catches |
+|---|---|
+| `tools/check.js` | JavaScript syntax errors. Field keys or blocks renamed or removed, or a block switched between one-off and repeatable, without acknowledgement. `schema.lock.json` or `data_dictionary.csv` not regenerated. Edited, deleted, misnamed or out-of-order migrations. A secret or service-role key in `config.js` or any file. Exported data files committed. |
+| `test/run_sql_tests.sh` | Any database change that breaks the rules: inactive accounts, editor stamping, conflict detection, admin-only delete, untouchable history, signed-out access. Runs 28 checks on a throwaway Postgres, with "Automatically expose new tables" both off and on. |
+| `tools/smoke_test.js` | The page failing in a browser. It opens the site in demo mode (never the live database), signs in, opens every section, adds a row, saves, checks the edit history, the date check, the export and the admin page, checks phone-width layout, and fails on any JavaScript error. |
+
+Run them locally the same way (needs Node, plus a scratch Postgres for the second):
 
 ```
-bash test/run_sql_tests.sh "postgres://postgres@localhost:5432/postgres"
+node tools/check.js
+bash test/run_sql_tests.sh "postgres://postgres:postgres@localhost:5432/postgres"
+npm install --no-save playwright && npx playwright install chromium && node tools/smoke_test.js
 ```
 
-The ERROR lines in its output are the expected refusals (inactive accounts, RA deletes, self-demotion and so on). The comments in `run_tests.sql` say what each step should show. Don't point it at your real project.
+Never point the SQL tests at the real project. `bash test/run_sql_tests.sh <url> --walkthrough` also prints `test/run_tests.sql`, a readable tour of the same rules.
+
+A failing check doesn't stop the commit from landing on `main`, but it stops it from going live. Fix it in a new commit, or `git revert` it; the next green run deploys. Don't add a GitHub branch rule requiring the checks: it would also block the keep-alive workflow's monthly commit.
 
 The page also runs without a database. With `config.js` blank it starts in **demo mode**: three pretend people, data kept in the browser, the same rules. Use it to try things out or to train RAs.
 

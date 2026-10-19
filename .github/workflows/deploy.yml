@@ -1,0 +1,138 @@
+# Check, then deploy. On every push to main:
+#   1. checks       repo checks (tools/check.js), database rules (test/run_sql_tests.sh on a
+#                   throwaway Postgres), and a headless-browser smoke test in demo mode.
+#   2. deploy-db    applies new supabase/migrations to Supabase (only if migrations changed).
+#   3. deploy-site  publishes index.html, config.js, css/ and js/ to GitHub Pages.
+# If any check fails, nothing is deployed and the live site stays as it was.
+# Pull requests run the checks only.
+# Requires: Settings > Pages > Source = "GitHub Actions", and the three Supabase secrets (README).
+name: Check and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+  workflow_dispatch:
+    inputs:
+      force_db:
+        description: 'Apply database migrations even if none changed'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    outputs:
+      migrations_changed: ${{ steps.diff.outputs.migrations_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Work out what changed
+        id: diff
+        env:
+          BEFORE: ${{ github.event.before }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          BASE="${PR_BASE:-$BEFORE}"
+          if [ -z "$BASE" ] || [[ "$BASE" =~ ^0+$ ]] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then BASE=""; fi
+          echo "BASE_SHA=$BASE" >> "$GITHUB_ENV"
+          if [ -z "$BASE" ] || git diff --name-only "$BASE" HEAD -- supabase/migrations | grep -q .; then
+            echo "migrations_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "migrations_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Repo checks (schema, migrations, secrets, data files, dictionary)
+        run: node tools/check.js
+
+      - name: Database rules
+        env:
+          PGPASSWORD: postgres
+        run: bash test/run_sql_tests.sh "postgres://postgres:postgres@localhost:5432/postgres"
+
+      - name: Browser smoke test (demo mode)
+        run: |
+          npm install --no-save --no-package-lock playwright@1.47.2
+          npx playwright install --with-deps chromium
+          node tools/smoke_test.js
+
+  deploy-db:
+    needs: checks
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (needs.checks.outputs.migrations_changed == 'true' || inputs.force_db)
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.20.12
+
+      - name: Check secrets
+        run: |
+          for v in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD PROJECT_REF; do
+            if [ -z "${!v}" ]; then echo "::error::Repository secret for $v is not set (see README)."; exit 1; fi
+          done
+
+      - name: Link to the project
+        run: supabase link --project-ref "$PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Show what will be applied
+        run: supabase migration list --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Apply new migrations
+        run: echo y | supabase db push --password "$SUPABASE_DB_PASSWORD"
+
+  deploy-site:
+    needs: [checks, deploy-db]
+    if: >-
+      always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' &&
+      needs.checks.result == 'success' &&
+      (needs.deploy-db.result == 'success' || needs.deploy-db.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect the site files (nothing else is published)
+        run: |
+          mkdir _site
+          cp -r index.html config.js css js _site/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
