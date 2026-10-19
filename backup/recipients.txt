@@ -1,3 +1,6 @@
 # Public keys that can decrypt the nightly backups (age format, one per line, starting "age1").
 # Add each person's PUBLIC key here. NEVER put a private key ("AGE-SECRET-KEY-...") in this repo.
 # How to make a key: docs/BACKUPS.md. Give at least two people a key, so losing one doesn't lose the backups.
+
+# Michael Weaver (added 2026-10-19)
+age1vcut9tjerdpnp2hl0w89f5hw6jc8jzk5vtgwpqfjkd5ypytkqsesrnz858
