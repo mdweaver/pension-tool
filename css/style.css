@@ -107,8 +107,14 @@ textarea.in { width: 100%; min-height: 64px; resize: vertical; font-family: var(
 .in:focus { background: var(--surface); border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px var(--accent-soft); }
 .in.bad { border-color: var(--err); background: var(--err-soft); }
 .in.warn { border-color: var(--warn); background: var(--warn-soft); }
-.dq { display: flex; gap: 4px; }
-.dq .q { width: calc(3ch + 22px); text-align: center; padding-inline: 2px; }
+.dq { display: flex; gap: 4px; flex-wrap: wrap; }
+.dq .q { width: calc(7ch + 14px); text-align: center; padding-inline: 2px; }
+.dq .q::placeholder { font-size: 11px; }
+.in.dp { text-align: center; padding-inline: 3px; }
+.urlrow { display: flex; gap: 8px; align-items: center; }
+.urlrow .in { flex: 1 1 auto; width: auto; }
+.srclink { font-size: 12.5px; white-space: nowrap; }
+select.in { font-family: var(--f-sans); font-size: 13px; }
 .meaning { font-size: 11px; color: var(--muted); height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 18ch; }
 .xbox { display: flex; align-items: center; justify-content: center; width: 30px; height: 29px; border: 1px solid var(--line); border-radius: 5px; background: var(--sunk); }
 .xbox input { width: 16px; height: 16px; accent-color: var(--accent); }

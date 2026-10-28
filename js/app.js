@@ -7,16 +7,20 @@ function sset(k,v){ try { localStorage.setItem(k,v); return true; } catch(e){ st
 function sdel(k){ try { localStorage.removeItem(k); } catch(e){} }
 
 function blankFields(fields){ const o={}; for (const f of fields){ if (f.t==='br') continue; if (f.t==='sub'){ o[f.k]=[blankFields(f.fields)]; continue; } o[f.k]=''; if (f.t==='date' && f.q) o[f.k+'_q']=''; } return o; }
+/* the rows a repeatable block starts with: one blank row, or the block's own defaults (g.init) */
+function blankRows(g){ return g.init ? g.init.map(o=>Object.assign(blankFields(g.fields),o)) : [blankFields(g.fields)]; }
+/* a row is blank if everything except pre-filled fields (g.ignore) is empty */
+function rowBlank(g,row){ return isBlank(g.ignore ? Object.fromEntries(Object.entries(row).filter(([k])=>!g.ignore.includes(k))) : row); }
 function newUid(){ return 'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
 function newRecord(){
   const r={_uid:newUid(), _schema:2};
-  for (const s of SCHEMA){ r[s.id]={}; for (const g of s.groups){ r[s.id][g.id] = g.repeat ? [blankFields(g.fields)] : blankFields(g.fields); } }
+  for (const s of SCHEMA){ r[s.id]={}; for (const g of s.groups){ r[s.id][g.id] = g.repeat ? blankRows(g) : blankFields(g.fields); } }
   r.meta.file.status='P'; r.meta.file.minutes='0';
   return r;
 }
 function upgrade(r){ // fill any groups/fields added to the schema since the record was made
   for (const s of SCHEMA){ r[s.id]=r[s.id]||{}; for (const g of s.groups){
-    if (g.repeat){ if (!Array.isArray(r[s.id][g.id])) r[s.id][g.id]=[blankFields(g.fields)]; r[s.id][g.id]=r[s.id][g.id].map(row=>Object.assign(blankFields(g.fields),row)); }
+    if (g.repeat){ if (!Array.isArray(r[s.id][g.id])) r[s.id][g.id]=blankRows(g); r[s.id][g.id]=r[s.id][g.id].map(row=>Object.assign(blankFields(g.fields),row)); }
     else r[s.id][g.id]=Object.assign(blankFields(g.fields), r[s.id][g.id]||{});
   } }
   return r;

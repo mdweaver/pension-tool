@@ -67,16 +67,17 @@ function compareShapes(oldS, newS) {
 }
 
 function dataDictionaryCSV(S) {
-  const out = [['section', 'group', 'repeatable', 'subgroup', 'field', 'label', 'type', 'codes', 'ua_var', 'origin', 'help']];
+  const out = [['section', 'group', 'repeatable', 'subgroup', 'field', 'label', 'type', 'codes', 'ua_var', 'origin', 'status', 'help']];
   for (const s of S.SCHEMA) for (const g of s.groups) {
     const walk = (fields, sub) => {
       for (const f of fields) {
         if (f.t === 'br') continue;
         if (f.t === 'sub') { walk(f.fields, f.k); continue; }
+        const status = (s.hide || g.hide || f.hide) ? 'retired (hidden from the form; saved values kept)' : 'active';
         const origin = f.tag === 'navy' ? 'adapted for Navy' : f.tag === 'project' ? 'new for this project' : (f.ua ? 'Union Army program' : 'new');
         const codes = f.t === 'code' ? (f.list === 'STATES' ? 'state/country codes (Appendix A)' : Object.entries(S.CODES[f.list]).map(([k, v]) => k + '=' + v).join('; ')) : (f.t === 'x' ? 'X' : '');
-        out.push([s.id, g.id, g.repeat ? 'yes' : 'no', sub || '', f.k, f.l, f.t === 'name' ? 'text (name rule)' : f.t, codes, f.ua || '', origin, (f.help || S.HELP[f.ua] || '')]);
-        if (f.t === 'date' && f.q) out.push([s.id, g.id, g.repeat ? 'yes' : 'no', sub || '', f.k + '_q', 'Quality code for ' + f.l, 'code', 'quality codes 1–9, B', f.uaq || '', origin, '']);
+        out.push([s.id, g.id, g.repeat ? 'yes' : 'no', sub || '', f.k, f.l, f.t === 'name' ? 'text (name rule)' : f.t === 'url' ? 'text (Fold3 URL)' : f.t, codes, f.ua || '', origin, status, (f.help || S.HELP[f.ua] || '')]);
+        if (f.t === 'date' && f.q) out.push([s.id, g.id, g.repeat ? 'yes' : 'no', sub || '', f.k + '_q', 'Quality code for ' + f.l, 'code', 'quality codes 1–9, B', f.uaq || '', origin, status, '']);
       }
     };
     walk(g.fields, '');

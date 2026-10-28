@@ -34,6 +34,28 @@
       }
      }
     },
+    "appfiles": {
+     "repeat": true,
+     "fields": {
+      "kind": {
+       "type": "code",
+       "list": "APPCERT"
+      },
+      "number": {
+       "type": "text"
+      },
+      "fiche": {
+       "type": "text"
+      },
+      "nara": {
+       "type": "code",
+       "list": "NARARG"
+      },
+      "url": {
+       "type": "url"
+      }
+     }
+    },
     "qc": {
      "repeat": false,
      "fields": {
@@ -58,6 +80,9 @@
       },
       "note": {
        "type": "text"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -83,6 +108,9 @@
       "file_type": {
        "type": "code",
        "list": "FILETYPE"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -92,6 +120,9 @@
       "date": {
        "type": "date",
        "quality": true
+      },
+      "addr": {
+       "type": "text"
       },
       "city": {
        "type": "text"
@@ -103,9 +134,15 @@
        "type": "code",
        "list": "STATES"
       },
+      "country": {
+       "type": "text"
+      },
       "place_q": {
        "type": "code",
        "list": "QC"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -135,6 +172,16 @@
       "hair_q": {
        "type": "code",
        "list": "QC"
+      },
+      "contraband": {
+       "type": "code",
+       "list": "YN"
+      },
+      "contraband_note": {
+       "type": "text"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -154,6 +201,9 @@
       "date": {
        "type": "date",
        "quality": true
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -168,6 +218,9 @@
        "type": "date",
        "quality": true
       },
+      "addr": {
+       "type": "text"
+      },
       "city": {
        "type": "text"
       },
@@ -177,6 +230,9 @@
       "state": {
        "type": "code",
        "list": "STATES"
+      },
+      "country": {
+       "type": "text"
       },
       "place_q": {
        "type": "code",
@@ -210,6 +266,9 @@
       },
       "img": {
        "type": "text"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -222,6 +281,9 @@
       },
       "years": {
        "type": "num"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -235,6 +297,9 @@
        "type": "date",
        "quality": true
       },
+      "b_addr": {
+       "type": "text"
+      },
       "b_city": {
        "type": "text"
       },
@@ -245,6 +310,9 @@
        "type": "code",
        "list": "STATES"
       },
+      "b_country": {
+       "type": "text"
+      },
       "b_place_q": {
        "type": "code",
        "list": "QC"
@@ -252,6 +320,9 @@
       "d_date": {
        "type": "date",
        "quality": true
+      },
+      "d_addr": {
+       "type": "text"
       },
       "d_city": {
        "type": "text"
@@ -263,9 +334,15 @@
        "type": "code",
        "list": "STATES"
       },
+      "d_country": {
+       "type": "text"
+      },
       "d_place_q": {
        "type": "code",
        "list": "QC"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -279,6 +356,9 @@
        "type": "date",
        "quality": true
       },
+      "b_addr": {
+       "type": "text"
+      },
       "b_city": {
        "type": "text"
       },
@@ -289,6 +369,9 @@
        "type": "code",
        "list": "STATES"
       },
+      "b_country": {
+       "type": "text"
+      },
       "b_place_q": {
        "type": "code",
        "list": "QC"
@@ -296,6 +379,9 @@
       "d_date": {
        "type": "date",
        "quality": true
+      },
+      "d_addr": {
+       "type": "text"
       },
       "d_city": {
        "type": "text"
@@ -307,9 +393,15 @@
        "type": "code",
        "list": "STATES"
       },
+      "d_country": {
+       "type": "text"
+      },
       "d_place_q": {
        "type": "code",
        "list": "QC"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -320,6 +412,9 @@
        "type": "code",
        "list": "FMP"
       },
+      "addr": {
+       "type": "text"
+      },
       "city": {
        "type": "text"
       },
@@ -329,6 +424,9 @@
       "state": {
        "type": "code",
        "list": "STATES"
+      },
+      "country": {
+       "type": "text"
       },
       "place_q": {
        "type": "code",
@@ -341,6 +439,85 @@
       "to": {
        "type": "date",
        "quality": true
+      },
+      "src": {
+       "type": "url"
+      }
+     }
+    },
+    "enslaved": {
+     "repeat": false,
+     "fields": {
+      "former": {
+       "type": "code",
+       "list": "YN"
+      },
+      "freed": {
+       "type": "date",
+       "quality": true
+      },
+      "at_enl": {
+       "type": "code",
+       "list": "FS"
+      },
+      "how": {
+       "type": "text"
+      },
+      "src": {
+       "type": "url"
+      }
+     }
+    },
+    "owners": {
+     "repeat": true,
+     "fields": {
+      "name": {
+       "type": "text"
+      },
+      "plantation": {
+       "type": "text"
+      },
+      "addr": {
+       "type": "text"
+      },
+      "city": {
+       "type": "text"
+      },
+      "county": {
+       "type": "text"
+      },
+      "state": {
+       "type": "code",
+       "list": "STATES"
+      },
+      "country": {
+       "type": "text"
+      },
+      "from": {
+       "type": "date",
+       "quality": true
+      },
+      "to": {
+       "type": "date",
+       "quality": true
+      },
+      "paid": {
+       "type": "num"
+      },
+      "paid_q": {
+       "type": "code",
+       "list": "QC"
+      },
+      "src": {
+       "type": "url"
+      }
+     }
+    },
+    "enslaved_rmk": {
+     "repeat": false,
+     "fields": {
+      "remarks": {
+       "type": "area"
       }
      }
     },
@@ -375,6 +552,9 @@
       "m_place": {
        "type": "text"
       },
+      "m_addr": {
+       "type": "text"
+      },
       "m_city": {
        "type": "text"
       },
@@ -384,6 +564,9 @@
       "m_state": {
        "type": "code",
        "list": "STATES"
+      },
+      "m_country": {
+       "type": "text"
       },
       "m_place_q": {
        "type": "code",
@@ -412,6 +595,9 @@
       },
       "img": {
        "type": "text"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -437,6 +623,9 @@
        "type": "date",
        "quality": true
       },
+      "b_addr": {
+       "type": "text"
+      },
       "b_city": {
        "type": "text"
       },
@@ -447,6 +636,9 @@
        "type": "code",
        "list": "STATES"
       },
+      "b_country": {
+       "type": "text"
+      },
       "b_place_q": {
        "type": "code",
        "list": "QC"
@@ -454,6 +646,9 @@
       "d_date": {
        "type": "date",
        "quality": true
+      },
+      "d_addr": {
+       "type": "text"
       },
       "d_city": {
        "type": "text"
@@ -465,9 +660,15 @@
        "type": "code",
        "list": "STATES"
       },
+      "d_country": {
+       "type": "text"
+      },
       "d_place_q": {
        "type": "code",
        "list": "QC"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -480,6 +681,9 @@
       "b_date": {
        "type": "date",
        "quality": true
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -509,6 +713,9 @@
        "type": "code",
        "list": "STATES"
       },
+      "country": {
+       "type": "text"
+      },
       "from": {
        "type": "date",
        "quality": true
@@ -516,6 +723,9 @@
       "to": {
        "type": "date",
        "quality": true
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -531,6 +741,9 @@
       "date": {
        "type": "date",
        "quality": true
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -547,6 +760,9 @@
       "to": {
        "type": "date",
        "quality": true
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -566,6 +782,9 @@
       "date": {
        "type": "date",
        "quality": true
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -578,6 +797,9 @@
       "date": {
        "type": "date",
        "quality": true
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -603,6 +825,9 @@
       },
       "img": {
        "type": "text"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -623,6 +848,9 @@
        "type": "date",
        "quality": true
       },
+      "addr": {
+       "type": "text"
+      },
       "city": {
        "type": "text"
       },
@@ -632,6 +860,9 @@
       "state": {
        "type": "code",
        "list": "STATES"
+      },
+      "country": {
+       "type": "text"
       },
       "place_q": {
        "type": "code",
@@ -657,6 +888,9 @@
       },
       "img": {
        "type": "text"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -673,6 +907,9 @@
       "to": {
        "type": "date",
        "quality": true
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -691,6 +928,9 @@
       },
       "desc": {
        "type": "text"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -712,6 +952,9 @@
       "vessel": {
        "type": "text"
       },
+      "addr": {
+       "type": "text"
+      },
       "city": {
        "type": "text"
       },
@@ -722,11 +965,17 @@
        "type": "code",
        "list": "STATES"
       },
+      "country": {
+       "type": "text"
+      },
       "unfit": {
        "type": "num"
       },
       "cause": {
        "type": "text"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -739,6 +988,9 @@
       "date": {
        "type": "date",
        "quality": true
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -765,6 +1017,9 @@
       },
       "legal": {
        "type": "text"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -782,6 +1037,9 @@
        "type": "code",
        "list": "STATES"
       },
+      "cap_country": {
+       "type": "text"
+      },
       "conf": {
        "type": "date",
        "quality": true
@@ -792,6 +1050,9 @@
       "conf_st": {
        "type": "code",
        "list": "STATES"
+      },
+      "conf_country": {
+       "type": "text"
       },
       "par": {
        "type": "date",
@@ -804,8 +1065,14 @@
        "type": "code",
        "list": "STATES"
       },
+      "par_country": {
+       "type": "text"
+      },
       "result": {
        "type": "text"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -822,6 +1089,9 @@
       "to": {
        "type": "date",
        "quality": true
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -836,6 +1106,75 @@
       },
       "d": {
        "type": "num"
+      },
+      "src": {
+       "type": "url"
+      }
+     }
+    },
+    "prizes": {
+     "repeat": true,
+     "fields": {
+      "captor": {
+       "type": "text"
+      },
+      "prize": {
+       "type": "text"
+      },
+      "date": {
+       "type": "date",
+       "quality": true
+      },
+      "paid": {
+       "type": "num"
+      },
+      "src": {
+       "type": "url"
+      }
+     }
+    },
+    "ill": {
+     "repeat": true,
+     "fields": {
+      "iw": {
+       "type": "code",
+       "list": "IW"
+      },
+      "desc": {
+       "type": "text"
+      },
+      "sev": {
+       "type": "text"
+      },
+      "date": {
+       "type": "date",
+       "quality": true
+      },
+      "where": {
+       "type": "text"
+      },
+      "hospital": {
+       "type": "text"
+      },
+      "adm": {
+       "type": "date",
+       "quality": true
+      },
+      "rel": {
+       "type": "date",
+       "quality": true
+      },
+      "result": {
+       "type": "text"
+      },
+      "source": {
+       "type": "text"
+      },
+      "img": {
+       "type": "text"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -967,6 +1306,9 @@
       },
       "img": {
        "type": "text"
+      },
+      "src": {
+       "type": "url"
       }
      }
     },
@@ -1050,6 +1392,9 @@
       "plantation": {
        "type": "text"
       },
+      "addr": {
+       "type": "text"
+      },
       "city": {
        "type": "text"
       },
@@ -1059,6 +1404,9 @@
       "state": {
        "type": "code",
        "list": "STATES"
+      },
+      "country": {
+       "type": "text"
       },
       "from": {
        "type": "date",
@@ -1367,6 +1715,12 @@
    "APPCERT": [
     "A",
     "C"
+   ],
+   "NARARG": [
+    "SC",
+    "SO",
+    "WC",
+    "WO"
    ],
    "DEATHSRC": [
     "C",

@@ -206,6 +206,7 @@ const CODES = {
   FILETYPE: {I:'Invalid — the sailor only',W:'Widow',P:'Dependent parent(s)',M:'Minor or dependent child'},
   CLAIMANT: {S:'Sailor',W:'Widow',M:'Minor / dependent child',P:'Parent'},
   APPCERT: {A:'Application number',C:'Certificate number'},
+  NARARG: {SC:'US Navy Survivors\u2019 Certificates',WC:'US Navy Widows\u2019 Certificates',SO:'US Navy Survivors\u2019 Originals',WO:'US Navy Widows\u2019 Originals'},
   DEATHSRC: {C:'Certificate (official death certificate)',L:'Letter',P:'Pension drop card',M:'Military / Navy record',O:'Other (affidavit, deposition, envelope…)'},
   COMPLEXION: {BK:'Black',BR:'Brown',BZ:'Bronze',CP:'Copper',DK:'Dark',FA:'Fair',FL:'Florid',FR:'Freckled',FS:'Fresh',GF:'Griffe',HE:'Healthy',HZ:'Hazel',LT:'Light',MU:'Mulatto',NG:'Negro',PA:'Pale',RD:'Red',RU:'Ruddy',SA:'Sallow',SD:'Sandy',WH:'White',YE:'Yellow'},
   EYES: {BK:'Black',BL:'Blue',BR:'Brown',BZ:'Bronze',DK:'Dark',GF:'Griffe',GN:'Green',GY:'Gray',HZ:'Hazel',LT:'Light'},
@@ -240,10 +241,20 @@ const C   = (k,l,list,o={}) => ({k,l,t:'code',list,w:o.w||Math.max(...Object.key
 const NUM = (k,l,w,min,max,o={}) => ({k,l,t:'num',w,min,max,...o});
 const AR  = (k,l,o={})   => ({k,l,t:'area',...o});
 const X   = (k,l,o={})   => ({k,l,t:'x',w:1,...o});
-const Q   = (k,o={})     => C(k,'Q','QC',o);
+const Q   = (k,o={})     => C(k,'Quality','QC',o);
 const BR  = {t:'br'};
-const PLACE = (p, ua, q=true) => [T(p+'city','City',20,{ua:ua[0]}), T(p+'county','County',20,{ua:ua[1]}), C(p+'state','St','STATES',{ua:ua[2]}), ...(q?[Q(p+'place_q',{ua:ua[3]})]:[])];
-const IMG = T('img','Image #',8,{help:'Image or page number in the scanned file where this was found (e.g. 0042, or 41–43). Lets a checker or a later AI pass go straight to the source.', tag:'project'});
+const U   = (k,l,w,o={}) => ({k,l,t:'url',w,...o});
+// Where something happened: address, city, county, state, country (filled with US when a US state is chosen), quality.
+// o.addr:false leaves out the address box for blocks that already have a street field.
+const US_STATES = new Set('AK AL AR AZ CA CO CT DC DE FL GA HI IA ID IL IN KS KY LA MA MD ME MI MN MO MS MT NC ND NE NH NJ NM NV NY OH OK OR PA RI SC SD TN TX UT VA VT WA WI WV WY US'.split(' '));
+const PLACE = (p, ua, q=true, o={}) => [
+  ...(o.addr===false ? [] : [T(p+'addr','Address',28,{tag:'project',help:'Street address, plantation, ship, institution or other specific location, exactly as the file gives it. Leave blank if there is none.'})]),
+  T(p+'city','City',20,{ua:ua[0]}), T(p+'county','County',20,{ua:ua[1]}),
+  C(p+'state','State','STATES',{ua:ua[2],cty:p+'country'}),
+  T(p+'country','Country',12,{tag:'project',help:'Filled in automatically as US when you pick a US state. For a place outside the US, type the country (the State box can still hold the province or country code from the manual\u2019s Appendix A).'}),
+  ...(q?[Q(p+'place_q',{ua:ua[3]})]:[])];
+const IMG = T('img','Image #',8,{help:'Image or page number in the scanned file where this was found (e.g. 0042, or 41–43). Lets a checker or a later AI pass go straight to the source.', tag:'project', hide:true}); // retired: every row now has a Fold3 source URL (SRC, added to all blocks at the end of this file)
+const SRC = U('src','Source (Fold3 page URL)',52,{tag:'project',help:'The Fold3 web address of the exact page of the pension or application file where this was found. Open that page in Fold3 and copy the address from the browser bar. If the information is spread over several pages, give the page you rely on most and say so in Remarks.'});
 
 /* ---------- the pension-file schema ----------
    ua = the variable in the old Union Army program this field descends from (help text comes from there).
@@ -252,18 +263,25 @@ const SCHEMA = [
  { id:'meta', n:'0', title:'File & tracking', ua:'(login, file header, inputting log)',
    intro:'Who is this sailor and which pension file is this. Who entered and changed it is recorded automatically from your login. The <b>Sailor ID</b> links this record to the prize lists, muster rolls and census matches, so enter it exactly.',
    groups:[
-    {id:'file', title:'Record', fields:[
+    {id:'file', title:'Record', nosrc:true, fields:[
       T('sailor_id','Sailor ID',14,{tag:'project',req:true,help:'The project Sailor ID for this man (the ID from the Reidy / NPS Black sailors database used in the prize-list matching). This is the key that links the pension to everything else, so check it twice.'}),
-      T('prize_id','Prize ID(s)',18,{tag:'project',help:'Optional. Prize ID(s) from the Abstracts of Prize Accounts that this sailor is matched to, separated by semicolons.'}),
+      T('prize_id','Prize ID(s)',18,{tag:'project',hide:true,help:'Optional. Prize ID(s) from the Abstracts of Prize Accounts that this sailor is matched to, separated by semicolons.'}),
       C('status','Status','STATUS',{help:'P while you are working on it, C when the file is fully entered, K once a second person has checked it (10% quality check).'}),
       NUM('minutes','Minutes',4,0,9999,{help:'Inputting time in minutes. Counted automatically while this record is open and you are active; correct it if needed.'}),
       BR,
       T('nara_ref','NARA file / box reference',30,{tag:'project',help:'Archival location of the file as requested (record group, series, box or file number), copied from the request slip.'}),
       T('scan_ref','Scan folder or file name',30,{tag:'project',help:'Where the images of this pension file are stored (Dropbox / Drive folder or PDF name).'}),
-      NUM('n_images','# images',4,0,5000,{tag:'project',help:'Total number of images or pages in the scanned file.'}),
-      NUM('n_surg','# surgeons certs',3,0,200,{help:'Number of Surgeons\' Certificates in the file. In the Union Army project these were set aside and entered as a separate dataset; count them here even if you do not enter them.'})
+      NUM('n_images','# images',4,0,5000,{tag:'project',hide:true,help:'Total number of images or pages in the scanned file.'}),
+      NUM('n_surg','# surgeons certs',3,0,200,{hide:true,help:'Number of Surgeons\' Certificates in the file. In the Union Army project these were set aside and entered as a separate dataset; count them here even if you do not enter them.'})
     ]},
-    {id:'qc', title:'Quality check', hint:'Filled in by the checker for the 10% sample.', fields:[
+    {id:'appfiles', title:'Applications & certificates in this file', repeat:true, nosrc:true, ignore:['kind'], init:[{kind:'A'},{kind:'C'}],
+     hint:'One row per application or certificate number on the request slip or file jacket. Two rows are ready (application, certificate); add a row for every further application, e.g. a widow\'s or a child\'s.', fields:[
+      C('kind','Application / certificate','APPCERT',{tag:'navy',sel:true,help:'Whether this row is an application number or a certificate number. Navy files were indexed separately from Army files; record the number exactly as on the slip, including any letters.'}),
+      T('number','Number',12,{ua:'appcrtn1'}),
+      T('fiche','Fiche number',10,{tag:'project',help:'The microfilm fiche number for this application or certificate, if the index or request slip gives one.'}),
+      C('nara','NARA record group','NARARG',{tag:'project',sel:true,help:'The National Archives record group (catalog series) this file comes from: Navy survivors\u2019 or widows\u2019 certificates, or survivors\u2019 or widows\u2019 originals (application files).'}), BR,
+      U('url','Fold3 record URL (this application / file)',52,{tag:'project',help:'The Fold3 web address of the record for this application or certificate (the first page of the file we are transcribing).'}) ]},
+    {id:'qc', title:'Quality check', hide:true, hint:'Filled in by the checker for the 10% sample.', fields:[
       T('checker','Checked by',18,{}), D('check_date','Check date',{q:false,min:2020,max:2035}), AR('check_notes','Checker notes',{help:'Corrections and general comments, good and bad. In the old workflow these went on an index card for the original inputter to review.'})
     ]}
    ]},
@@ -271,27 +289,33 @@ const SCHEMA = [
    intro:'Names, pension numbers, birth, description, death and parents. Collect <b>every variant spelling and alias</b>: formerly enslaved men often appear under more than one surname, and variants are what make census linking work.',
    groups:[
     {id:'names', title:'Names and aliases', repeat:true, hint:'First row is the name the file is indexed under.', fields:[ NM('name','Name (LAST, FIRST M (COMMENTS))',40,{ua:'recname1',nameRule:true}), T('note','Where found / alias of',30,{tag:'project',help:'Optional: e.g. ALIAS, NAME AT ENLISTMENT, NAME AFTER FREEDOM, SPELLING ON DEATH CERTIFICATE.'}) ]},
-    {id:'appcert', title:'Application & certificate numbers', repeat:true, hint:'From the request slip attached to the file. Enter each number left to right.', fields:[
+    {id:'appcert', title:'Application & certificate numbers', repeat:true, hide:true, hint:'From the request slip attached to the file. Enter each number left to right.', fields:[
       C('kind','App / Cert','APPCERT',{tag:'navy',help:'A for an application number, C for a certificate number. Navy files were indexed separately from Army files; record the number exactly as on the slip, including any letters.'}),
       T('number','Number',12,{ua:'appcrtn1'}),
       C('claimant','Claimant','CLAIMANT',{tag:'project',help:'Whose claim the number belongs to: the sailor, his widow, a minor child, or a parent. Widows, children and parents received their own application and certificate numbers.'}) ]},
     {id:'ftype', title:'File type', fields:[ C('file_type','File type (Inv/Wid/Pa/Mnr)','FILETYPE',{ua:'penftype'}) ]},
-    {id:'births', title:'Birth', repeat:true, sortBy:'date', hint:'Add a row for each discrepant birth date or place. Age at a dated event can give an inferred date (Q 6).', fields:[ D('date','Birth date',{help:'Date of birth. Found on enlistment returns (as age), affidavits, family circulars, Bible records and death certificates. An approximate date can be inferred from age at a dated event (quality code 6). Add a row for each discrepant birth date or place.',ua:'rb_date1',uaq:'rb_dtqc1',min:1780,max:1856}), ...PLACE('',['rb_city1','rb_cnty1','rb_stat1','rb_plqc1']) ]},
+    {id:'births', title:'Birth', repeat:true, sortBy:'date', hint:'Add a row for each discrepant birth date or place. Age at a dated event can give an inferred date (quality 6).', fields:[ D('date','Birth date',{help:'Date of birth. Found on enlistment returns (as age), affidavits, family circulars, Bible records and death certificates. An approximate date can be inferred from age at a dated event (quality code 6). Add a row for each discrepant birth date or place.',ua:'rb_date1',uaq:'rb_dtqc1',min:1780,max:1856}), ...PLACE('',['rb_city1','rb_cnty1','rb_stat1','rb_plqc1']) ]},
     {id:'appear', title:'Description', hint:'Navy enlistment returns and certificates of service in the file often give these.', fields:[
       C('complexion','Complexion','COMPLEXION',{ua:'ra_cplxn'}), Q('complexion_q',{ua:'ra_cplqc'}),
       C('eyes','Eyes','EYES',{ua:'ra_eyec'}), Q('eyes_q',{ua:'ra_eyeqc'}),
-      C('hair','Hair','HAIR',{ua:'ra_hairc'}), Q('hair_q',{ua:'ra_harqc'}) ]},
+      C('hair','Hair','HAIR',{ua:'ra_hairc'}), Q('hair_q',{ua:'ra_harqc'}), BR,
+      C('contraband','"Contraband" in Navy records?','YN',{tag:'project',help:'Y if the naval records (enlistment return, muster roll, certificate of service) describe him as "contraband" or a contraband of war. Say where it appears in the next box.'}),
+      T('contraband_note','Where it appears / as written',40,{tag:'project'}) ]},
     {id:'heights', title:'Height', repeat:true, sortBy:'date', fields:[ NUM('feet','Feet',1,3,7,{ua:'rh_feet1'}), NUM('inches','Inches',5,0,11.99,{ua:'rh_inch1',dec:true}), Q('hq',{ua:'rh_fiqc1'}), D('date','Date measured',{ua:'rh_date1',min:1840,max:1940}) ]},
     {id:'death', title:'Death', hint:'Upgrade the source as you find better evidence: a certificate beats a letter beats a drop card.', fields:[
       C('source','Source','DEATHSRC',{ua:'rd_stype'}), D('date','Death date',{ua:'rd_date',uaq:'rd_dtqc',min:1861,max:1950}), ...PLACE('',['rd_city','rd_cnty','rd_stat','rd_plqc']), BR,
       T('cause','Cause of death',50,{ua:'rd_cause'}), D('cause_beg','Began',{ua:'rd_bgdt',uaq:'rd_bdtqc',min:1840,max:1950}), BR,
-      T('contrib','Contributing cause',50,{ua:'rd_ccaus'}), D('contrib_beg','Began',{ua:'rd_cbgdt',uaq:'rd_cbdqc',min:1840,max:1950}), BR,
-      NUM('ill_y','Illness lasted: yrs',2,0,90,{ua:'rd_illyr'}), NUM('ill_m','mos',2,0,12,{ua:'rd_illmn'}), NUM('ill_d','days',3,0,31,{ua:'rd_illdy'}),
+      T('contrib','Contributing cause',50,{ua:'rd_ccaus',hide:true}), D('contrib_beg','Began',{ua:'rd_cbgdt',uaq:'rd_cbdqc',min:1840,max:1950,hide:true}), BR,
+      NUM('ill_y','Illness lasted: yrs',2,0,90,{ua:'rd_illyr',hide:true}), NUM('ill_m','mos',2,0,12,{ua:'rd_illmn',hide:true}), NUM('ill_d','days',3,0,31,{ua:'rd_illdy',hide:true}),
       T('burial','Place of burial',36,{tag:'project',help:'Cemetery or place of burial if stated. (The old manual put this in Remarks; it has its own field here.)'}), IMG ]},
     {id:'immig', title:'If immigrant', fields:[ D('entry','Date of entry',{ua:'ri_entdt',uaq:'ri_edtqc',min:1790,max:1880}), NUM('years','Or # of years in country',2,0,90,{ua:'ri_numyr'}) ]},
     {id:'father', title:'Father', fields:[ T('name','Name (first name only)',36,{ua:'fthrname'}), BR, D('b_date','Born',{ua:'fb_date',uaq:'fb_dtqc',min:1700,max:1850}), ...PLACE('b_',['fb_city','fb_cnty','fb_stat','fb_plqc']), BR, D('d_date','Died',{ua:'fd_date',uaq:'fd_dtqc',min:1780,max:1930}), ...PLACE('d_',['fd_city','fd_cnty','fd_stat','fd_plqc']) ]},
     {id:'mother', title:'Mother', fields:[ T('name','Name (first name; NEE maiden)',36,{ua:'mthrname'}), BR, D('b_date','Born',{ua:'mb_date',uaq:'mb_dtqc',min:1700,max:1850}), ...PLACE('b_',['mb_city','mb_cnty','mb_stat','mb_plqc']), BR, D('d_date','Died',{ua:'md_date',uaq:'md_dtqc',min:1780,max:1930}), ...PLACE('d_',['md_city','md_cnty','md_stat','md_plqc']) ]},
     {id:'pres', title:'Parents\' residences', repeat:true, sortBy:'from', fields:[ C('who','Fa/Mo/Pa','FMP',{ua:'pr_fmpt1'}), ...PLACE('',['pr_city1','pr_cnty1','pr_stat1','pr_plqc1']), D('from','From',{ua:'pr_fmdt1',uaq:'pr_fdqc1',min:1750,max:1950}), D('to','To',{ua:'pr_todt1',uaq:'pr_tdqc1',min:1750,max:1950}) ]},
+{id:'enslaved', title:'Enslavement: status', hint:'Moved here from the old Enslavement tab. Many of these sailors were enslaved before the war. Look for owners\' names in declarations, depositions of former neighbors, and Navy enlistment notes such as "contraband".', fields:[ C('former','Former slave? (Y/N)','YN',{ua:'recslave'}), D('freed','When freed',{ua:'timefrdt',uaq:'timefrqc',min:1800,max:1866}), C('at_enl','At enlistment (Slave/Free)','FS',{ua:'enlst_fs'}),
+      T('how','How freed',30,{tag:'project',help:'If stated: e.g. ESCAPED TO UNION LINES, MANUMITTED, EMANCIPATION, ENLISTMENT, PURCHASED FREEDOM.'}) ]},
+    {id:'owners', title:'Enslavement: owners', repeat:true, sortBy:'from', fields:[ NM('name','Owner name',36,{ua:'ownnm_01'}), T('plantation','Plantation',24,{ua:'ownres_01'}), BR, ...PLACE('',['ownct_01','owcnt_01','ownst_01'],false), D('from','From',{ua:'orfdt_01',uaq:'orfdqc_01',min:1790,max:1866}), D('to','To',{ua:'ortdt_01',uaq:'ortdqc_01',min:1790,max:1866}), NUM('paid','$ paid for slave',6,0,1e5,{ua:'compsl_01',dec:true}), Q('paid_q',{ua:'comslqc_01'}) ]},
+    {id:'enslaved_rmk', title:'Enslavement: remarks', fields:[ AR('remarks','Remarks',{ua:'sc9rmks'}) ]},
     {id:'rmk', title:'Remarks', fields:[ AR('remarks','Remarks — label each one, separate with ;',{ua:'sc1rmks'}) ]}
    ]},
  { id:'family', n:'2', title:'Family', ua:'Screen 2 · Personal family information',
@@ -300,8 +324,8 @@ const SCHEMA = [
     {id:'spouses', title:'Spouses', repeat:true, sortBy:'m_date', hint:'Old limit was 3; enter all. Discrepant info for the same marriage goes in Remarks, not a new row.', fields:[
       NM('name','Name (MARRIED LAST, FIRST (NEE MAIDEN))',44,{ua:'wifname1'}), D('b_date','Born',{ua:'wb_date1',uaq:'wb_dtqc1',min:1790,max:1910}), D('d_date','Died',{ua:'wd_date1',uaq:'wd_dtqc1',min:1825,max:2000}), BR,
       D('m_date','Married',{ua:'wm_date1',uaq:'wm_dtqc1',min:1820,max:1950}), T('m_place','Marriage place',20,{ua:'wm_plac1'}), ...PLACE('m_',['wm_city1','wm_cnty1','wm_stat1','wm_plqc1']), BR,
-      NM('officiator','Officiator',36,{ua:'wm_ofct1'}), C('divsep','Div/Sep','DS',{ua:'wm_dors1'}), D('ds_date','Date',{ua:'wm_dsdt1',uaq:'wm_dsqc1',min:1825,max:1975}), BR,
-      T('religion','Religion',30,{ua:'religon1'}), Q('religion_q',{ua:'rlgnqc1'}), T('source','Best source',26,{ua:'rlgnsrc1'}), IMG ]},
+      NM('officiator','Officiator',36,{ua:'wm_ofct1',hide:true}), C('divsep','Div/Sep','DS',{ua:'wm_dors1'}), D('ds_date','Date',{ua:'wm_dsdt1',uaq:'wm_dsqc1',min:1825,max:1975}), BR,
+      T('religion','Religion',30,{ua:'religon1'}), Q('religion_q',{ua:'rlgnqc1'}), T('source','Best source',26,{ua:'rlgnsrc1',hide:true}), IMG ]},
     {id:'children', title:'Children', repeat:true, sortBy:'b_date', hint:'Old limit was 15; enter all. Don\'t repeat the surname, but record married daughters\' surnames.', fields:[
       NM('name','Name',36,{ua:'chname01'}), C('sex','M/F','MF',{ua:'c_sex01'}), C('ld','L/D','LD',{ua:'c_lord01'}), D('ld_date','As of',{ua:'c_lddt01',uaq:'c_ldqc01',min:1840,max:1950}), BR,
       D('b_date','Born',{ua:'cb_dt01',uaq:'cb_dqc01',min:1840,max:1935}), ...PLACE('b_',['cb_cty01','cb_cnt01','cb_st01','cb_pqc01']), BR,
@@ -312,11 +336,11 @@ const SCHEMA = [
  { id:'socio', n:'3', title:'Residence, work & wealth', ua:'Screen 3 · Socio-economic information',
    intro:'Build a <b>window of time</b> for each residence and occupation: keep the earliest date in From and widen To as later documents turn up. Envelopes and letterheads count. These fields feed the mobility and wealth outcomes.',
    groups:[
-    {id:'res', title:'Residences', repeat:true, sortBy:'from', fields:[ T('street','Street',30,{ua:'r_str01'}), ...PLACE('',['r_city01','r_cnty01','r_stat01'],false), D('from','From',{ua:'r_fmdt01',uaq:'r_fdqc01',min:1810,max:1950}), D('to','To',{ua:'r_todt01',uaq:'r_tdqc01',min:1810,max:1950}) ]},
+    {id:'res', title:'Residences', repeat:true, sortBy:'from', fields:[ T('street','Address (street)',30,{ua:'r_str01'}), ...PLACE('',['r_city01','r_cnty01','r_stat01'],false,{addr:false}), D('from','From',{ua:'r_fmdt01',uaq:'r_fdqc01',min:1810,max:1950}), D('to','To',{ua:'r_todt01',uaq:'r_tdqc01',min:1810,max:1950}) ]},
     {id:'livwith', title:'Living with', repeat:true, sortBy:'date', hint:'Only when not with parents (before marriage) or spouse.', fields:[ NM('name','Name',25,{ua:'r_lvwth1'}), T('rel','Relationship',15,{ua:'r_lwrln1'}), D('date','Date',{ua:'r_lvwdt1',uaq:'r_lwdqc1',min:1810,max:1950}) ]},
     {id:'jobs', title:'Occupations', repeat:true, sortBy:'from', hint:'Spell out except F, LAB, F LAB, TMS. Seafaring work after discharge counts.', fields:[ T('job','Occupation',26,{ua:'ro_job01'}), D('from','From',{ua:'ro_fdt01',uaq:'ro_fqc01',min:1810,max:1950}), D('to','To',{ua:'ro_tdt01',uaq:'ro_tqc01',min:1810,max:1950}) ]},
     {id:'labor', title:'Labor force participation', repeat:true, sortBy:'date', fields:[ NUM('pct','%',3,0,100,{ua:'rl_prt01'}), C('wd','W/D','WD',{ua:'rl_wd01'}), T('desc','Or description',50,{ua:'rl_pds01'}), D('date','At',{ua:'rl_pdt01',uaq:'rl_pqc01',min:1860,max:1950}) ]},
-    {id:'finance', title:'State of finances', repeat:true, sortBy:'date', hint:'Always fill at least one row, even if UNKNOWN with no date.', fields:[ T('state','State of finances',40,{ua:'rf_stof1'}), D('date','At',{ua:'rf_stdt1',uaq:'rf_stqc1',min:1860,max:1950}) ]},
+    {id:'finance', title:'Poverty/Dependency', repeat:true, sortBy:'date', hint:'Always fill at least one row, even if UNKNOWN with no date.', fields:[ T('state','Poverty/Dependency',40,{ua:'rf_stof1'}), D('date','At',{ua:'rf_stdt1',uaq:'rf_stqc1',min:1860,max:1950}) ]},
     {id:'wealth', title:'Wealth & income', repeat:true, sortBy:'date', hint:'Anything dated within a year of death counts as his wealth unless stated otherwise.', fields:[ C('type','Type','WEALTH',{ua:'rw_inf01'}), T('source','Source document',30,{ua:'rw_ins01'}), D('date','Date',{ua:'rw_ind01',uaq:'rw_iqc01',min:1860,max:1950}), NUM('amt','Amount $',8,0,1e7,{ua:'rw_amt01',dec:true}), BR, T('desc','Description',53,{ua:'rw_des01'}), IMG ]},
     {id:'rmk', title:'Remarks', fields:[ AR('remarks','Remarks',{ua:'sc3rmks'}) ]}
    ]},
@@ -335,12 +359,21 @@ const SCHEMA = [
       ...PLACE('',['dccty#','dccnt#','dchst#'],false), NUM('unfit','# days unfit',3,0,500,{ua:'unftd#'}), T('cause','Cause',40,{ua:'unftc#'}) ]},
     {id:'battles', title:'Engagements', repeat:true, sortBy:'date', hint:'Captures, bombardments, actions. Record by Union name; if unsure two names are one event, record both.', fields:[ T('name','Engagement',35,{ua:'battle01'}), D('date','Date',{ua:'batldt01',uaq:'batdqc01',min:1855,max:1870}) ]},
     {id:'actions', title:'Desertion, AWOL, arrest, furlough', repeat:true, sortBy:'from', hint:'Desertion charges ("R" marks) were often contested in pension claims; record both the charge and any removal.', fields:[ C('type','Type','ACTION',{ua:'milcact1'}), D('from','From',{ua:'milcfdt1',uaq:'milcfqc1',min:1855,max:1900}), D('to','To',{ua:'milctdt1',uaq:'milctqc1',min:1855,max:1900}), BR, T('place','Place',40,{ua:'milcplc1'}), T('reason','Reason',40,{ua:'milcrsn1'}), T('legal','Legal action / result',40,{ua:'milcleg1'}) ]},
-    {id:'pow', title:'Prisoner of war', repeat:true, hint:'One row per imprisonment.', fields:[ D('cap','Captured',{ua:'captrdt1',uaq:'capdtqc1',min:1861,max:1866}), T('cap_at','At',24,{ua:'captrpl1'}), C('cap_st','St','STATES',{ua:'captrst1'}), BR, D('conf','Confined',{ua:'confndt1',uaq:'condtqc1',min:1861,max:1866}), T('conf_at','At',24,{ua:'confnpl1'}), C('conf_st','St','STATES',{ua:'confnst1'}), BR, D('par','Paroled',{ua:'paroldt1',uaq:'pardtqc1',min:1861,max:1866}), T('par_at','At',24,{ua:'parolpl1'}), C('par_st','St','STATES',{ua:'parolst1'}), T('result','Results',40,{ua:'powrslt1'}) ]},
+    {id:'pow', title:'Prisoner of war', repeat:true, hint:'One row per imprisonment.', fields:[ D('cap','Captured',{ua:'captrdt1',uaq:'capdtqc1',min:1861,max:1866}), T('cap_at','At',24,{ua:'captrpl1'}), C('cap_st','State','STATES',{ua:'captrst1',cty:'cap_country'}), T('cap_country','Country',12,{tag:'project'}), BR, D('conf','Confined',{ua:'confndt1',uaq:'condtqc1',min:1861,max:1866}), T('conf_at','At',24,{ua:'confnpl1'}), C('conf_st','State','STATES',{ua:'confnst1',cty:'conf_country'}), T('conf_country','Country',12,{tag:'project'}), BR, D('par','Paroled',{ua:'paroldt1',uaq:'pardtqc1',min:1861,max:1866}), T('par_at','At',24,{ua:'parolpl1'}), C('par_st','State','STATES',{ua:'parolst1',cty:'par_country'}), T('par_country','Country',12,{tag:'project'}), T('result','Results',40,{ua:'powrslt1'}) ]},
     {id:'other', title:'Other service (Army, merchant, prior Navy)', repeat:true, sortBy:'from', fields:[ T('desc','Service',44,{tag:'project',help:'Any non-Navy or earlier service mentioned in the file, e.g. 55 MA INF CO B, MERCHANT SEAMAN, USCT. One row per service.'}), D('from','From',{min:1830,max:1900}), D('to','To',{min:1830,max:1900}) ]},
     {id:'lops', title:'Length of pensionable service', hint:'Only on post-1907 ruling forms. Copy exactly; do not convert.', fields:[ NUM('y','Years',1,0,9,{ua:'lopsyrs'}), NUM('m','Months',2,0,36,{ua:'lopsmth'}), NUM('d','Days',3,0,366,{ua:'lopsdys'}) ]},
+    {id:'prizes', title:'Prizes (as reported in the pension file)', repeat:true, sortBy:'date', hint:'One row per prize capture the file mentions, with any prize money the sailor says he received. These are matched to the project\'s list of known prizes by script later, so write vessel names as the file does.', fields:[
+      T('captor','Capturing vessel',26,{tag:'project',help:'The Union vessel that made the capture, as USS NAME.'}),
+      T('prize','Prize vessel (what was captured)',26,{tag:'project',help:'The vessel or cargo that was captured, as the file names it.'}),
+      D('date','Date of capture',{tag:'project',min:1861,max:1870}),
+      NUM('paid','Prize payment received $',8,0,1e6,{tag:'project',dec:true,help:'Amount of prize money the sailor says he received for this capture, in dollars. Leave blank if the file gives no amount.'}) ]},
+    {id:'ill', title:'In-service illnesses & injuries', repeat:true, sortBy:'date', hint:'Moved here from the old tab. Use only for official reports in the pension file (Navy Department or Bureau of Medicine reports of hospital treatment, surgeon\'s reports of injury). Disabilities the sailor claims go on Applications.', fields:[
+      C('iw','I/W','IW',{ua:'illwnd#'}), T('desc','Description',36,{ua:'ilwdsc#',help:'Illness or wound with all descriptors, e.g. ACUTE DIARRHEA, CHRONIC RHEUMATISM, GSW L LEG, HERNIA, FRACTURE R ARM.'}), T('sev','Severity',10,{ua:'ilwsev#',help:'ACUTE, CHRONIC, FATAL, SEVERE, SLIGHT, FLESH.'}), D('date','Date received / contracted',{min:1855,max:1870}), BR,
+      T('where','Where (vessel, place, engagement)',30,{tag:'navy'}), T('hospital','Hospital or ship',26,{tag:'navy',help:'e.g. NAVAL HOSPITAL NORFOLK, HOSPITAL SHIP RED ROVER, IN QUARTERS (sick bay).'}), D('adm','Admitted',{min:1855,max:1870}), D('rel','Released',{min:1855,max:1870}), BR,
+      T('result','Result of treatment',36,{help:'RETURNED TO DUTY, DISCHARGED, TRANSFERRED, DIED, etc.'}), T('source','Source document',26,{tag:'project'}), IMG ]},
     {id:'rmk', title:'Remarks', fields:[ AR('remarks','Remarks',{ua:'sc5rmks'}) ]}
    ]},
- { id:'medical', n:'5', title:'In-service illness & injury', ua:'Screen 6 · Medical, slimmed',
+ { id:'medical', n:'5', hide:true, title:'In-service illness & injury', ua:'Screen 6 · Medical, slimmed',
    intro:'The old Screen 6 followed the Army\'s carded medical records, which we don\'t have. Use this only for <b>official reports in the pension file</b> (Navy Department or Bureau of Medicine reports of hospital treatment, surgeon\'s reports of injury). Disabilities the sailor claims go on Applications.',
    groups:[
     {id:'ill', title:'Illnesses & injuries', repeat:true, sortBy:'date', fields:[
@@ -348,7 +381,7 @@ const SCHEMA = [
       T('where','Where (vessel, place, engagement)',30,{tag:'navy'}), T('hospital','Hospital or ship',26,{tag:'navy',help:'e.g. NAVAL HOSPITAL NORFOLK, HOSPITAL SHIP RED ROVER, IN QUARTERS (sick bay).'}), D('adm','Admitted',{min:1855,max:1870}), D('rel','Released',{min:1855,max:1870}), BR,
       T('result','Result of treatment',36,{help:'RETURNED TO DUTY, DISCHARGED, TRANSFERRED, DIED, etc.'}), T('source','Source document',26,{tag:'project'}), IMG ]}
    ]},
- { id:'apps', n:'6', title:'Applications & rulings', ua:'Screen 7 · Application and rulings',
+ { id:'apps', n:'5', title:'Applications & rulings', ua:'Screen 7 · Application and rulings',
    intro:'One row per application/claim-form pair. Rows can be entered in any order; use <b>Sort by date</b> before finishing (the old Alt-S). <b>Writes (Y/N)</b> on the claim form is one of our literacy measures, so fill it whenever the form says.',
    groups:[
     {id:'app', title:'Applications', repeat:true, sortBy:'date', fields:[
@@ -362,7 +395,7 @@ const SCHEMA = [
       T('reason','Reason (rejection / decrease)',60,{ua:'reason#'}), IMG ]},
     {id:'rmk', title:'Remarks', fields:[ AR('remarks','Remarks',{help:'Anything about the pension history that has no field: special acts, suspensions, restorations, payments to guardians.'}) ]}
    ]},
- { id:'aff', n:'7', title:'Affidavits', ua:'Screen 8 · Affidavits',
+ { id:'aff', n:'7', hide:true, title:'Affidavits', ua:'Screen 8 · Affidavits',
    intro:'Not every affidavit, only testimony with useful information that has no other field. Record the deponent\'s <b>relationship</b>, not their name, and quote the original wording where you can.',
    groups:[
     {id:'aff', title:'Affidavits & depositions', repeat:true, sortBy:'date', fields:[
@@ -370,7 +403,7 @@ const SCHEMA = [
       C('t1','Type','INFOTYPE',{ua:'info1t#'}), C('t2','Type 2','INFOTYPE',{ua:'info2t#'}), C('period','Pre/War/After','PERIOD',{ua:'infotm#'}), D('info_date','Info date',{ua:'infodt#',min:1800,max:1950}), BR,
       AR('desc','Pertinent testimony (original wording)',{ua:'afdesc#'}), IMG ]}
    ]},
- { id:'slavery', n:'8', title:'Enslavement', ua:'Screen 9 · Slave information',
+ { id:'slavery', n:'8', hide:true, title:'Enslavement', ua:'Screen 9 · Slave information',
    intro:'Many of these sailors were enslaved before the war. Look for owners\' names in declarations, depositions of former neighbors, and Navy enlistment notes such as "contraband". The USCT officer/enlisted questions are dropped.',
    groups:[
     {id:'status', title:'Status', fields:[ C('former','Former slave? (Y/N)','YN',{ua:'recslave'}), D('freed','When freed',{ua:'timefrdt',uaq:'timefrqc',min:1800,max:1866}), C('at_enl','At enlistment (Slave/Free)','FS',{ua:'enlst_fs'}),
@@ -378,7 +411,7 @@ const SCHEMA = [
     {id:'owners', title:'Owners', repeat:true, sortBy:'from', fields:[ NM('name','Owner name',36,{ua:'ownnm_01'}), T('plantation','Plantation',24,{ua:'ownres_01'}), BR, ...PLACE('',['ownct_01','owcnt_01','ownst_01'],false), D('from','From',{ua:'orfdt_01',uaq:'orfdqc_01',min:1790,max:1866}), D('to','To',{ua:'ortdt_01',uaq:'ortdqc_01',min:1790,max:1866}), NUM('paid','$ paid for slave',6,0,1e5,{ua:'compsl_01',dec:true}), Q('paid_q',{ua:'comslqc_01'}) ]},
     {id:'rmk', title:'Remarks', fields:[ AR('remarks','Remarks',{ua:'sc9rmks'}) ]}
    ]},
- { id:'va', n:'9', title:'VA home survey', ua:'Screen 10 · Oldest Old VA form',
+ { id:'va', n:'9', hide:true, title:'VA home survey', ua:'Screen 10 · Oldest Old VA form',
    intro:'Only for files with the Veterans Administration home-visit form (late 1920s–1930s). Type each answer <b>exactly as written</b>.',
    groups:[
     {id:'va', title:'VA form', fields:[ NUM('age','Age',3,10,130,{ua:'vafrmage'}), D('date','Form date',{ua:'vaformdt',min:1920,max:1950}), BR,
@@ -387,3 +420,14 @@ const SCHEMA = [
       AR('guardian','8. Need for a guardian?',{ua:'appgrdn'}), AR('recommend','9. Recommendation',{ua:'recomdtn'}), AR('remarks','Remarks',{ua:'sc10rmks'}) ]}
    ]}
 ];
+
+/* ---------- retired and added-everywhere parts ----------
+   hide:true on a field, block or section takes it out of the form, the checks and the CSV export but keeps its key
+   here, so records already saved still hold the values (and the JSON export still shows them). Never delete a key
+   from this file; see CLAUDE.md rule 1.
+   Every block that holds data (not Remarks, not blocks marked nosrc) gets a Fold3 source URL on each row. */
+for (const sec of SCHEMA) if (!sec.hide) for (const g of sec.groups) if (!g.hide && !g.nosrc && g.id!=='rmk' && !g.id.endsWith('_rmk')) g.fields.push(BR, SRC);
+const visSections = () => SCHEMA.filter(s => !s.hide);
+const visGroups = s => s.groups.filter(g => !g.hide);
+// Visible fields of a block; leading, trailing and doubled line breaks (left by hidden fields) are dropped.
+const visFields = fields => { const out=[]; for (const f of fields){ if (f.hide) continue; if (f.t==='br' && (!out.length || out[out.length-1].t==='br')) continue; out.push(f); } while (out.length && out[out.length-1].t==='br') out.pop(); return out; };

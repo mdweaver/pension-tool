@@ -104,9 +104,9 @@ function DemoBackend(){
     ], records: {}, versions: [] };
     // A fictional record: Ada starts it yesterday, Ben adds to it this morning.
     const ex = exampleRecord(); ex._uid = 'rexample0001';
-    const first = clone(ex); first.family.children = first.family.children.slice(0, 1); first.aff.aff = [blankFields(SCHEMA.find(s => s.id === 'aff').groups[0].fields)]; first.meta.file.status = 'P';
+    const first = clone(ex); first.family.children = first.family.children.slice(0, 1); first.service.prizes = [blankFields(SCHEMA.find(s => s.id === 'service').groups.find(g => g.id === 'prizes').fields)]; first.meta.file.status = 'P';
     write('u-ada', ex._uid, first, 0, iso(60 * 20));
-    const second = clone(first); second.family.children = clone(ex.family.children); second.aff.aff = clone(ex.aff.aff); second.personal.names[0].name = 'EXAMPLE, JAMES HENRY';
+    const second = clone(first); second.family.children = clone(ex.family.children); second.service.prizes = clone(ex.service.prizes); second.personal.names[0].name = 'EXAMPLE, JAMES HENRY';
     write('u-ben', ex._uid, second, 1, iso(90));
     return db;
   }
