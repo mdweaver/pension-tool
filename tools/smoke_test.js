@@ -33,7 +33,7 @@ const ok = (cond, msg) => { results.push((cond ? '  ok   ' : '  FAIL ') + msg); 
   await step('every section of a record opens', async () => {
     await page.click('[data-act=open]');
     await page.waitForSelector('.prov', T);
-    const secs = await page.evaluate(() => SCHEMA.map(s => [s.id, s.title]));
+    const secs = await page.evaluate(() => visSections().map(s => [s.id, s.title]));
     const bad = [];
     for (const [id, title] of secs) {
       await page.click(`nav [data-sec="${id}"]`);
@@ -59,12 +59,47 @@ const ok = (cond, msg) => { results.push((cond ? '  ok   ' : '  FAIL ') + msg); 
     const diff = await page.textContent('#main .diff');
     ok(/Version 3/i.test(head) && /Ada/.test(head) && /HERNIA/.test(diff), 'edit history shows the save with its author and change');
   });
+  const dpart = (path, part) => `[data-path="${path}"][data-dpart="${part}"]`;
   await step('field checks flag a bad date', async () => {
     await page.click('nav [data-sec="personal"]');
-    await page.fill('#f-personal-death-date', '');
-    await page.type('#f-personal-death-date', '13401899');
+    await page.fill(dpart('personal.death.date', 'm'), '13');
+    await page.fill(dpart('personal.death.date', 'd'), '34');
+    await page.fill(dpart('personal.death.date', 'y'), '1899');
     await page.click('#main h1');
-    ok(await page.$eval('#f-personal-death-date', e => e.classList.contains('bad')), 'field checks flag a bad date');
+    ok(await page.$eval(dpart('personal.death.date', 'y'), e => e.classList.contains('bad')), 'field checks flag a bad date');
+  });
+  await step('a year-only or year-and-month date is stored with dashes and accepted', async () => {
+    await page.fill(dpart('personal.death.date', 'm'), '');
+    await page.fill(dpart('personal.death.date', 'd'), '');
+    await page.dispatchEvent(dpart('personal.death.date', 'd'), 'input');
+    const yearOnly = await page.evaluate(() => cur.personal.death.date);
+    await page.fill(dpart('personal.death.date', 'm'), '4');
+    await page.dispatchEvent(dpart('personal.death.date', 'm'), 'input');
+    const yearMonth = await page.evaluate(() => cur.personal.death.date);
+    await page.click('#main h1');
+    ok(yearOnly === '--/--/1899' && yearMonth === '04/--/1899' && !(await page.$eval(dpart('personal.death.date', 'y'), e => e.classList.contains('bad'))), 'a year-only or year-and-month date is stored with dashes and accepted');
+  });
+  await step('choosing a US state fills in the country', async () => {
+    await page.fill('[data-path="personal.death.state"]', 'VA');
+    await page.dispatchEvent('[data-path="personal.death.state"]', 'input');
+    ok((await page.inputValue('[data-path="personal.death.country"]')) === 'US' && (await page.evaluate(() => cur.personal.death.country)) === 'US', 'choosing a US state fills in the country');
+  });
+  await step('a source URL is checked and every row has one', async () => {
+    await page.fill('[data-path="personal.death.src"]', 'not a url');
+    await page.dispatchEvent('[data-path="personal.death.src"]', 'input');
+    const msg = await page.evaluate(() => checkField(fieldForPath('personal.death.src'), cur.personal.death.src, cur.personal.death));
+    const hasSrc = await page.evaluate(() => visSections().every(s => visGroups(s).every(g => g.id === 'rmk' || g.id.endsWith('_rmk') || g.nosrc || g.fields.some(f => f.k === 'src'))));
+    ok(msg && msg.lvl === 'err' && hasSrc, 'a source URL is checked and every row has one');
+  });
+  await step('file tab starts with an application row and a certificate row', async () => {
+    await page.click('nav [data-sec="meta"]');
+    const kinds = await page.$$eval('[data-path^="meta.appfiles."][data-path$=".kind"]', els => els.map(e => e.value));
+    const opts = await page.$$eval('[data-path="meta.appfiles.0.nara"] option', els => els.length);
+    ok(kinds.length >= 2 && kinds[0] === 'A' && kinds[1] === 'C' && opts === 5, 'file tab starts with an application row and a certificate row');
+  });
+  await step('cut sections are hidden but kept in the data', async () => {
+    const r = await page.evaluate(() => [!!document.querySelector('nav [data-sec="aff"]'), !!document.querySelector('nav [data-sec="va"]'), !!document.querySelector('nav [data-sec="slavery"]'), !!document.querySelector('nav [data-sec="medical"]'), 'aff' in cur && 'slavery' in cur]);
+    ok(!r[0] && !r[1] && !r[2] && !r[3] && r[4], 'cut sections are hidden but kept in the data');
   });
   await step('export builds a CSV', async () => {
     const head = await page.evaluate(async () => toCSV((await API.allData()).map(upgrade)).split('\r\n')[0]);
@@ -83,7 +118,7 @@ const ok = (cond, msg) => { results.push((cond ? '  ok   ' : '  FAIL ') + msg); 
     await page.click('nav [data-sec="records"]'); await page.waitForSelector('.rtab tbody tr', T);
     await page.click('[data-act=open]'); await page.waitForSelector('.prov', T);
     const wide = [];
-    for (const id of ['meta', 'personal', 'family', 'apps', 'aff']) {
+    for (const id of ['meta', 'personal', 'family', 'service', 'apps']) {
       await page.click(`nav [data-sec="${id}"]`);
       if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)) wide.push(id);
     }

@@ -5,15 +5,25 @@ function onInput(e){
   const path=el.dataset.path; if (!path||!cur) return;
   const f=fieldForPath(path); let v;
   if (el.type==='checkbox') v = el.checked?'X':'';
-  else if (f && f.t==='date'){
-    let raw=el.value.replace(/\?/g,'-').replace(/[^\d-]/g,'').slice(0,8);
-    v = raw.length>4 ? raw.slice(0,2)+'/'+raw.slice(2,4)+'/'+raw.slice(4) : raw.length>2 ? raw.slice(0,2)+'/'+raw.slice(2) : raw;
-    if (el.value!==v){ el.value=v; }
+  else if (f && f.t==='date' && el.dataset.dpart){
+    const part=el.dataset.dpart, len=part==='y'?4:2;
+    const raw=el.value.replace(/\?/g,'-').replace(/[^\d-]/g,'').slice(0,len);
+    if (el.value!==raw) el.value=raw;
+    const box=p=>document.querySelector(`[data-path="${path}"][data-dpart="${p}"]`).value;
+    v=composeDate(box('m'),box('d'),box('y'));
+    if (raw.length===len && part!=='d' && e.inputType==='insertText') document.querySelector(`[data-path="${path}"][data-dpart="${part==='y'?'m':'d'}"]`).focus();
+  } else if (f && f.t==='url'){
+    v=el.value.replace(/\s+/g,''); if (el.value!==v) el.value=v;
+    const a=el.parentElement.querySelector('.srclink'); if (a){ const ok=/^https?:\/\//i.test(v); a.hidden=!ok; a.href=ok?v:'#'; }
   } else if (f && f.t!=='area'){
     const p=el.selectionStart; v=el.value.toUpperCase(); if (el.value!==v){ el.value=v; try{el.setSelectionRange(p,p);}catch(_){} }
   } else v=el.value;
   setPath(cur, path, v);
   if (f && f.t==='code'){ const m=el.parentElement.querySelector('.meaning'); if (m) m.textContent = CODES[f.list][v]||''; }
+  if (f && f.cty && US_STATES.has(v)){ // a US state implies the country
+    const cp=path.split('.').slice(0,-1).concat(f.cty).join('.'); setPath(cur,cp,'US');
+    const ce=document.querySelector(`[data-path="${cp}"]`); if (ce) ce.value='US';
+  }
   markActive(); schedSave();
   if (path.startsWith('personal.names.0')||path.startsWith('meta.file.')) renderTop();
 }
@@ -21,9 +31,10 @@ function onBlur(e){
   const el=e.target; const path=el.dataset?.path; if (!path||!cur) return;
   const f=fieldForPath(path); if (!f) return;
   const rowPath=path.split('.').slice(0,-1).join('.'); const row=getPath(cur,rowPath);
-  const target = path.endsWith('_q') ? document.getElementById('f-'+path.slice(0,-2).replace(/\./g,'-')) : el;
-  const ff = path.endsWith('_q') ? fieldForPath(path.slice(0,-2)) : f;
-  if (target && ff){ const res=checkField(ff, getPath(cur, path.endsWith('_q')?path.slice(0,-2):path), row); target.classList.toggle('bad', !!res && res.lvl==='err'); target.classList.toggle('warn', !!res && res.lvl==='warn'); }
+  const basePath = path.endsWith('_q') ? path.slice(0,-2) : path;
+  const targets = [...document.querySelectorAll(`[data-path="${basePath}"]`)]; // a date has three boxes
+  const ff = path.endsWith('_q') ? fieldForPath(basePath) : f;
+  if (targets.length && ff){ const res=checkField(ff, getPath(cur, basePath), row); for (const t of targets){ t.classList.toggle('bad', !!res && res.lvl==='err'); t.classList.toggle('warn', !!res && res.lvl==='warn'); } }
   sideRefresh();
 }
 let ptrDown=false, sidePending=false;
@@ -38,7 +49,7 @@ document.addEventListener('focusout', onBlur);
 document.addEventListener('focusin', e=>{ const p=e.target.dataset?.path; if (p && cur) renderGuide(fieldForPath(p), p); });
 document.addEventListener('keydown', e=>{
   if (e.key==='Enter' && e.target.matches('#main input.in[data-path]') && !e.shiftKey){ e.preventDefault(); const all=[...document.querySelectorAll('#main input.in[data-path], #main textarea.in[data-path], #main input[type=checkbox][data-path]')]; const i=all.indexOf(e.target); if (all[i+1]) all[i+1].focus(); }
-  if (e.altKey && (e.key==='ArrowDown'||e.key==='ArrowUp') && cur && view==='edit'){ e.preventDefault(); const i=SCHEMA.findIndex(s=>s.id===curSec); const j=Math.max(0,Math.min(SCHEMA.length-1,i+(e.key==='ArrowDown'?1:-1))); goSec(SCHEMA[j].id); }
+  if (e.altKey && (e.key==='ArrowDown'||e.key==='ArrowUp') && cur && view==='edit'){ e.preventDefault(); const VS=visSections(); const i=VS.findIndex(s=>s.id===curSec); const j=Math.max(0,Math.min(VS.length-1,i+(e.key==='ArrowDown'?1:-1))); goSec(VS[j].id); }
   if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); saveNow(); }
   if (e.key==='Escape' && !$('#modal').hidden){ $('#modal').hidden=true; }
 });
@@ -112,7 +123,7 @@ document.addEventListener('click', async e=>{
   const nav=e.target.closest('[data-sec]'); if (nav){ e.preventDefault(); goSec(nav.dataset.sec); return; }
   const b=e.target.closest('[data-act]'); if (!b) return;
   const act=b.dataset.act, path=b.dataset.path;
-  if (act==='add'){ const [sid,gid]=path.split('.'); const g=secById(sid).groups.find(x=>x.id===gid); cur[sid][gid].push(blankFields(g.fields)); schedSave(); renderMain(); const rows=document.querySelectorAll(`#g-${sid}-${gid} .row`); rows[rows.length-1]?.querySelector('input,textarea')?.focus(); }
+  if (act==='add'){ const [sid,gid]=path.split('.'); const g=secById(sid).groups.find(x=>x.id===gid); cur[sid][gid].push(blankFields(g.fields)); schedSave(); renderMain(); const rows=document.querySelectorAll(`#g-${sid}-${gid} .row`); rows[rows.length-1]?.querySelector('input,textarea,select')?.focus(); }
   else if (act==='del'){ arm(b, path, 'Confirm', ()=>{ const ks=path.split('.'); const arr=cur[ks[0]][ks[1]]; arr.splice(+ks[2],1); if (!arr.length){ const g=secById(ks[0]).groups.find(x=>x.id===ks[1]); arr.push(blankFields(g.fields)); } schedSave(); renderMain(); renderNav(); refreshChecks(); }); }
   else if (act==='sort'){ const [sid,gid]=path.split('.'); const k=b.dataset.key; const arr=cur[sid][gid]; const blanks=arr.filter(isBlank); const filled=arr.filter(r=>!isBlank(r)).sort((a,b2)=>dateKey(a[k]).localeCompare(dateKey(b2[k]))); cur[sid][gid]=[...filled,...blanks]; schedSave(); renderMain(); toast('Sorted by date'); }
   else if (act==='addsub'){ const arr=getPath(cur,path); const sub=SCHEMA.find(s=>s.id==='apps').groups[0].fields.find(x=>x.t==='sub'); arr.push(blankFields(sub.fields)); schedSave(); renderMain(); }

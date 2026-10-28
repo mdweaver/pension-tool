@@ -26,11 +26,11 @@ function renderNav(){
   if (isAdmin()) h += `<a href="#" data-sec="team" class="${view==='team'?'on':''}"><span class="n">◎</span><span>Team & activity</span><span></span></a>`;
   if (cur){
     h+='<div class="grp">This file</div>';
-    for (const s of SCHEMA){ const n=checks.filter(c=>c.sec===s.id).length;
+    for (const s of visSections()){ const n=checks.filter(c=>c.sec===s.id).length;
       h+=`<a href="#" data-sec="${s.id}" class="${view==='edit'&&curSec===s.id?'on':''}"><span class="n">${s.n}</span><span>${esc(s.title)}</span>${n?`<span class="b" title="${n} item(s) to check">${n}</span>`:'<span></span>'}</a>`; }
     if (!curMeta.isNew) h+=`<a href="#" data-sec="history" class="${view==='history'?'on':''}"><span class="n">↺</span><span>Edit history</span><span></span></a>`;
   }
-  h+=`<div class="kbd"><kbd>Enter</kbd> next field<br><kbd>Alt</kbd>+<kbd>↓</kbd>/<kbd>↑</kbd> next / previous section<br><kbd>Ctrl</kbd>+<kbd>S</kbd> save<br>Type <kbd>-</kbd> for unreadable date digits</div>`;
+  h+=`<div class="kbd"><kbd>Enter</kbd> next field<br><kbd>Alt</kbd>+<kbd>↓</kbd>/<kbd>↑</kbd> next / previous section<br><kbd>Ctrl</kbd>+<kbd>S</kbd> save<br>Dates: year, month, day boxes; leave unknown parts empty</div>`;
   $('#idx').innerHTML=h;
 }
 function renderMain(){
@@ -47,9 +47,9 @@ function renderMain(){
     h+= curMeta.isNew ? `<div class="prov">New record. It will be saved under your name, <b>${esc(ME.display_name)}</b>.</div>`
       : `<div class="prov">Created by <b>${esc(curMeta.created_by_name||'?')}</b> on ${esc(fmtTime(curMeta.created_at))} · last saved by <b>${esc(curMeta.updated_by_name||'?')}</b> on ${esc(fmtTime(curMeta.updated_at))} (version ${curMeta.version}) · <a href="#" data-sec="history">see edit history</a></div>`;
   }
-  for (const g of s.groups) h+=groupHTML(s,g);
-  const i=SCHEMA.indexOf(s);
-  h+=`<div class="tools" style="margin-top:6px">${i>0?`<button class="btn" data-sec="${SCHEMA[i-1].id}" type="button">← ${esc(SCHEMA[i-1].title)}</button>`:''}${i<SCHEMA.length-1?`<button class="btn" data-sec="${SCHEMA[i+1].id}" type="button">${esc(SCHEMA[i+1].title)} →</button>`:''}<button class="btn primary" data-act="save" type="button">Save</button></div>`;
+  for (const g of visGroups(s)) h+=groupHTML(s,g);
+  const VS=visSections(), i=VS.indexOf(s);
+  h+=`<div class="tools" style="margin-top:6px">${i>0?`<button class="btn" data-sec="${VS[i-1].id}" type="button">← ${esc(VS[i-1].title)}</button>`:''}${i<VS.length-1?`<button class="btn" data-sec="${VS[i+1].id}" type="button">${esc(VS[i+1].title)} →</button>`:''}<button class="btn primary" data-act="save" type="button">Save</button></div>`;
   $('#main').innerHTML=h;
 }
 

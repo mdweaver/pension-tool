@@ -133,6 +133,7 @@ This login is the database owner and bypasses the RA permission rules, so keep t
 The fields are defined in `js/schema.js` (`SCHEMA`). After editing it, run `node tools/update.js`, which refreshes `schema.lock.json` and `data_dictionary.csv`, and commit all three. Saved records pick up new fields automatically. RAs see the change after the workflow finishes, when they reload the page.
 
 - **Safe:** new fields, blocks or codes; new or changed labels, help text, hints, order.
+- **Dropping or moving** a field, block or section is not breaking if you mark it `hide:true` in `js/schema.js`: it leaves the form but its saved values stay. See the developer guide.
 - **Breaking:** renaming or removing a field key, block or section; switching a block between one-off and repeatable. Saved values would disappear from the form and the exports. `tools/update.js` refuses these. If one is really needed, see `CLAUDE.md` rule 1 (it needs a data migration as well).
 
 Database changes go in a **new** migration file with a later timestamp (e.g. `supabase/migrations/20261101000000_add_x.sql`). Never edit one that has already been applied; the checks block that.
