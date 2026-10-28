@@ -269,8 +269,8 @@ const SCHEMA = [
       C('status','Status','STATUS',{help:'P while you are working on it, C when the file is fully entered, K once a second person has checked it (10% quality check).'}),
       NUM('minutes','Minutes',4,0,9999,{help:'Inputting time in minutes. Counted automatically while this record is open and you are active; correct it if needed.'}),
       BR,
-      T('nara_ref','NARA file / box reference',30,{tag:'project',help:'Archival location of the file as requested (record group, series, box or file number), copied from the request slip.'}),
-      T('scan_ref','Scan folder or file name',30,{tag:'project',help:'Where the images of this pension file are stored (Dropbox / Drive folder or PDF name).'}),
+      T('nara_ref','NARA file / box reference',30,{tag:'project',hide:true,help:'Archival location of the file as requested (record group, series, box or file number), copied from the request slip.'}),
+      T('scan_ref','Scan folder or file name',30,{tag:'project',hide:true,help:'Where the images of this pension file are stored (Dropbox / Drive folder or PDF name).'}),
       NUM('n_images','# images',4,0,5000,{tag:'project',hide:true,help:'Total number of images or pages in the scanned file.'}),
       NUM('n_surg','# surgeons certs',3,0,200,{hide:true,help:'Number of Surgeons\' Certificates in the file. In the Union Army project these were set aside and entered as a separate dataset; count them here even if you do not enter them.'})
     ]},
@@ -293,14 +293,15 @@ const SCHEMA = [
       C('kind','App / Cert','APPCERT',{tag:'navy',help:'A for an application number, C for a certificate number. Navy files were indexed separately from Army files; record the number exactly as on the slip, including any letters.'}),
       T('number','Number',12,{ua:'appcrtn1'}),
       C('claimant','Claimant','CLAIMANT',{tag:'project',help:'Whose claim the number belongs to: the sailor, his widow, a minor child, or a parent. Widows, children and parents received their own application and certificate numbers.'}) ]},
-    {id:'ftype', title:'File type', fields:[ C('file_type','File type (Inv/Wid/Pa/Mnr)','FILETYPE',{ua:'penftype'}) ]},
+    {id:'ftype', title:'File type', hide:true, keepsrc:true, fields:[ C('file_type','File type (Inv/Wid/Pa/Mnr)','FILETYPE',{ua:'penftype'}) ]},
     {id:'births', title:'Birth', repeat:true, sortBy:'date', hint:'Add a row for each discrepant birth date or place. Age at a dated event can give an inferred date (quality 6).', fields:[ D('date','Birth date',{help:'Date of birth. Found on enlistment returns (as age), affidavits, family circulars, Bible records and death certificates. An approximate date can be inferred from age at a dated event (quality code 6). Add a row for each discrepant birth date or place.',ua:'rb_date1',uaq:'rb_dtqc1',min:1780,max:1856}), ...PLACE('',['rb_city1','rb_cnty1','rb_stat1','rb_plqc1']) ]},
     {id:'appear', title:'Description', hint:'Navy enlistment returns and certificates of service in the file often give these.', fields:[
       C('complexion','Complexion','COMPLEXION',{ua:'ra_cplxn'}), Q('complexion_q',{ua:'ra_cplqc'}),
       C('eyes','Eyes','EYES',{ua:'ra_eyec'}), Q('eyes_q',{ua:'ra_eyeqc'}),
       C('hair','Hair','HAIR',{ua:'ra_hairc'}), Q('hair_q',{ua:'ra_harqc'}), BR,
       C('contraband','"Contraband" in Navy records?','YN',{tag:'project',help:'Y if the naval records (enlistment return, muster roll, certificate of service) describe him as "contraband" or a contraband of war. Say where it appears in the next box.'}),
-      T('contraband_note','Where it appears / as written',40,{tag:'project'}) ]},
+      T('contraband_note','Where it appears / as written',40,{tag:'project'}), BR,
+      U('contraband_src','Contraband: Fold3 page URL',52,{tag:'project',help:'The Fold3 web address of the page of the Navy record where the contraband description appears. This is separate from the source box below, which covers the rest of the description.'}) ]},
     {id:'heights', title:'Height', repeat:true, sortBy:'date', fields:[ NUM('feet','Feet',1,3,7,{ua:'rh_feet1'}), NUM('inches','Inches',5,0,11.99,{ua:'rh_inch1',dec:true}), Q('hq',{ua:'rh_fiqc1'}), D('date','Date measured',{ua:'rh_date1',min:1840,max:1940}) ]},
     {id:'death', title:'Death', hint:'Upgrade the source as you find better evidence: a certificate beats a letter beats a drop card.', fields:[
       C('source','Source','DEATHSRC',{ua:'rd_stype'}), D('date','Death date',{ua:'rd_date',uaq:'rd_dtqc',min:1861,max:1950}), ...PLACE('',['rd_city','rd_cnty','rd_stat','rd_plqc']), BR,
@@ -425,8 +426,9 @@ const SCHEMA = [
    hide:true on a field, block or section takes it out of the form, the checks and the CSV export but keeps its key
    here, so records already saved still hold the values (and the JSON export still shows them). Never delete a key
    from this file; see CLAUDE.md rule 1.
-   Every block that holds data (not Remarks, not blocks marked nosrc) gets a Fold3 source URL on each row. */
-for (const sec of SCHEMA) if (!sec.hide) for (const g of sec.groups) if (!g.hide && !g.nosrc && g.id!=='rmk' && !g.id.endsWith('_rmk')) g.fields.push(BR, SRC);
+   Every block that holds data (not Remarks, not blocks marked nosrc, not hidden blocks unless marked keepsrc because the key was already
+   saved) gets a Fold3 source URL on each row. */
+for (const sec of SCHEMA) if (!sec.hide) for (const g of sec.groups) if ((!g.hide || g.keepsrc) && !g.nosrc && g.id!=='rmk' && !g.id.endsWith('_rmk')) g.fields.push(BR, SRC);
 const visSections = () => SCHEMA.filter(s => !s.hide);
 const visGroups = s => s.groups.filter(g => !g.hide);
 // Visible fields of a block; leading, trailing and doubled line breaks (left by hidden fields) are dropped.

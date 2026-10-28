@@ -171,7 +171,7 @@ See `docs/BACKUPS.md`. The scripts name the app's tables explicitly (`profiles`,
 
 ## Hidden fields and what moved (October 2026)
 
-Hidden fields (`hide:true`): File & tracking: Quality check block, Prize ID, # images, # surgeons certs. Sailor: the old Application & certificate numbers block, Death contributing cause and its start date, illness length. Family: spouse officiator and best source. Image # fields everywhere (replaced by the Fold3 source URL). Hidden sections: In-service illness & injury (now Navy service), Affidavits, Enslavement (now Sailor), VA home survey. The Applications section is now numbered 5.
+Hidden fields (`hide:true`): File & tracking: Quality check block, Prize ID, # images, # surgeons certs, NARA file / box reference, scan folder (added 28 Oct). Sailor: the File type block, the old Application & certificate numbers block, Death contributing cause and its start date, illness length. Family: spouse officiator and best source. Image # fields everywhere (replaced by the Fold3 source URL). Hidden sections: In-service illness & injury (now Navy service), Affidavits, Enslavement (now Sailor), VA home survey. The Applications section is now numbered 5.
 
 ## Planned work
 
