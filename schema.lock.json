@@ -180,6 +180,9 @@
       "contraband_note": {
        "type": "text"
       },
+      "contraband_src": {
+       "type": "url"
+      },
       "src": {
        "type": "url"
       }

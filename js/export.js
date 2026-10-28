@@ -37,13 +37,12 @@ async function doExport(kind, all){
 /* ---------- fictional example record (demo mode only) ---------- */
 function exampleRecord(){
   const r=newRecord(); r._example=true;
-  const F=r.meta.file; Object.assign(F,{sailor_id:'EXAMPLE-0001',status:'P',minutes:'38',nara_ref:'(fictional example)',scan_ref:'example_scans/EXAMPLE-0001'});
+  const F=r.meta.file; Object.assign(F,{sailor_id:'EXAMPLE-0001',status:'P',minutes:'38'});
   const P=r.personal;
   P.names=[{name:'EXAMPLE, JAMES H',note:''},{name:'EXEMPLAR, JAMES',note:'NAME AT ENLISTMENT'}];
   r.meta.appfiles=[{kind:'A',number:'000001',fiche:'',nara:'SO',url:'https://www.fold3.com/example/0001'},{kind:'C',number:'000002',fiche:'F-12',nara:'SC',url:'https://www.fold3.com/example/0002'},{kind:'A',number:'000003',fiche:'',nara:'WO',url:'https://www.fold3.com/example/0003'}];
-  P.ftype.file_type='W';
   P.births=[{date:'--/--/1841',date_q:'6',city:'',county:'NORFOLK',state:'VA',place_q:''}];
-  Object.assign(P.appear,{complexion:'BK',complexion_q:'',eyes:'BK',eyes_q:'',hair:'BK',hair_q:'',contraband:'Y',contraband_note:'ENLISTMENT RETURN: CONTRABAND'});
+  Object.assign(P.appear,{complexion:'BK',complexion_q:'',eyes:'BK',eyes_q:'',hair:'BK',hair_q:'',contraband:'Y',contraband_note:'ENLISTMENT RETURN: CONTRABAND',contraband_src:'https://www.fold3.com/example/0004'});
   P.heights=[{feet:'5',inches:'6.5',hq:'',date:'08/14/1863',date_q:''}];
   Object.assign(P.death,{source:'C',date:'03/02/1902',date_q:'',city:'NORFOLK',county:'NORFOLK',state:'VA',place_q:'',cause:'PNEUMONIA',cause_beg:'02/20/1902',cause_beg_q:'',addr:'12 BAY STREET',country:'US',src:'https://www.fold3.com/example/0051'});
   P.rmk.remarks='NAME: SIGNS AS JAMES H EXAMPLE AFTER 1880';
