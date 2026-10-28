@@ -173,6 +173,9 @@
        "type": "code",
        "list": "QC"
       },
+      "src": {
+       "type": "url"
+      },
       "contraband": {
        "type": "code",
        "list": "YN"
@@ -181,9 +184,6 @@
        "type": "text"
       },
       "contraband_src": {
-       "type": "url"
-      },
-      "src": {
        "type": "url"
       }
      }
