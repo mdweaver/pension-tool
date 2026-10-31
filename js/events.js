@@ -15,7 +15,7 @@ function onInput(e){
   } else if (f && f.t==='url'){
     v=el.value.replace(/\s+/g,''); if (el.value!==v) el.value=v;
     const a=el.parentElement.querySelector('.srclink'); if (a){ const ok=/^https?:\/\//i.test(v); a.hidden=!ok; a.href=ok?v:'#'; }
-  } else if (f && f.t!=='area'){
+  } else if (f && f.t!=='area' && f.t!=='appref'){
     const p=el.selectionStart; v=el.value.toUpperCase(); if (el.value!==v){ el.value=v; try{el.setSelectionRange(p,p);}catch(_){} }
   } else v=el.value;
   setPath(cur, path, v);

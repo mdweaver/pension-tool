@@ -97,6 +97,17 @@ const ok = (cond, msg) => { results.push((cond ? '  ok   ' : '  FAIL ') + msg); 
     const opts = await page.$$eval('[data-path="meta.appfiles.0.nara"] option', els => els.length);
     ok(kinds.length >= 2 && kinds[0] === 'A' && kinds[1] === 'C' && opts === 5, 'file tab starts with an application row and a certificate row');
   });
+  await step('immigration can have several rows and depositions pick a file from File & tracking', async () => {
+    await page.click('nav [data-sec="personal"]');
+    const before = await page.$$eval('[data-path^="personal.immigs."][data-path$=".years"]', els => els.length);
+    await page.click('[data-act=add][data-path="personal.immigs"]');
+    const after = await page.$$eval('[data-path^="personal.immigs."][data-path$=".years"]', els => els.length);
+    await page.click('nav [data-sec="deps"]');
+    const opts = await page.$$eval('[data-path="deps.depo.0.file"] option', els => els.map(e => e.textContent));
+    await page.selectOption('[data-path="deps.depo.0.file"]', { index: 2 });
+    const saved = await page.evaluate(() => cur.deps.depo[0].file);
+    ok(after === before + 1 && opts.length >= 3 && opts.includes('Application number 000001') && opts.includes('Certificate number 000002') && saved === opts[2], 'immigration can have several rows and depositions pick a file from File & tracking');
+  });
   await step('cut sections are hidden but kept in the data', async () => {
     const r = await page.evaluate(() => [!!document.querySelector('nav [data-sec="aff"]'), !!document.querySelector('nav [data-sec="va"]'), !!document.querySelector('nav [data-sec="slavery"]'), !!document.querySelector('nav [data-sec="medical"]'), 'aff' in cur && 'slavery' in cur]);
     ok(!r[0] && !r[1] && !r[2] && !r[3] && r[4], 'cut sections are hidden but kept in the data');
@@ -118,7 +129,7 @@ const ok = (cond, msg) => { results.push((cond ? '  ok   ' : '  FAIL ') + msg); 
     await page.click('nav [data-sec="records"]'); await page.waitForSelector('.rtab tbody tr', T);
     await page.click('[data-act=open]'); await page.waitForSelector('.prov', T);
     const wide = [];
-    for (const id of ['meta', 'personal', 'family', 'service', 'apps']) {
+    for (const id of ['meta', 'personal', 'family', 'service', 'apps', 'deps']) {
       await page.click(`nav [data-sec="${id}"]`);
       if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)) wide.push(id);
     }

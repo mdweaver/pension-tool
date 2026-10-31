@@ -76,7 +76,7 @@ function dataDictionaryCSV(S) {
         const status = (s.hide || g.hide || f.hide) ? 'retired (hidden from the form; saved values kept)' : 'active';
         const origin = f.tag === 'navy' ? 'adapted for Navy' : f.tag === 'project' ? 'new for this project' : (f.ua ? 'Union Army program' : 'new');
         const codes = f.t === 'code' ? (f.list === 'STATES' ? 'state/country codes (Appendix A)' : Object.entries(S.CODES[f.list]).map(([k, v]) => k + '=' + v).join('; ')) : (f.t === 'x' ? 'X' : '');
-        out.push([s.id, g.id, g.repeat ? 'yes' : 'no', sub || '', f.k, f.l, f.t === 'name' ? 'text (name rule)' : f.t === 'url' ? 'text (Fold3 URL)' : f.t, codes, f.ua || '', origin, status, (f.help || S.HELP[f.ua] || '')]);
+        out.push([s.id, g.id, g.repeat ? 'yes' : 'no', sub || '', f.k, f.l, f.t === 'name' ? 'text (name rule)' : f.t === 'url' ? 'text (Fold3 URL)' : f.t === 'appref' ? 'text (file chosen from File & tracking)' : f.t, codes, f.ua || '', origin, status, (f.help || S.HELP[f.ua] || '')]);
         if (f.t === 'date' && f.q) out.push([s.id, g.id, g.repeat ? 'yes' : 'no', sub || '', f.k + '_q', 'Quality code for ' + f.l, 'code', 'quality codes 1–9, B', f.uaq || '', origin, status, '']);
       }
     };

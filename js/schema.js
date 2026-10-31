@@ -244,6 +244,8 @@ const X   = (k,l,o={})   => ({k,l,t:'x',w:1,...o});
 const Q   = (k,o={})     => C(k,'Quality','QC',o);
 const BR  = {t:'br'};
 const U   = (k,l,w,o={}) => ({k,l,t:'url',w,...o});
+/* AF: a drop-down of the application / certificate numbers entered in File & tracking (meta.appfiles); stores the label, e.g. "Application number 12345" */
+const AF  = (k,l,o={}) => ({k,l,t:'appref',w:30,...o});
 // Where something happened: address, city, county, state, country (filled with US when a US state is chosen), quality.
 // o.addr:false leaves out the address box for blocks that already have a street field.
 const US_STATES = new Set('AK AL AR AZ CA CO CT DC DE FL GA HI IA ID IL IN KS KY LA MA MD ME MI MN MO MS MT NC ND NE NH NJ NM NV NY OH OK OR PA RI SC SD TN TX UT VA VT WA WI WV WY US'.split(' '));
@@ -310,7 +312,8 @@ const SCHEMA = [
       T('contrib','Contributing cause',50,{ua:'rd_ccaus',hide:true}), D('contrib_beg','Began',{ua:'rd_cbgdt',uaq:'rd_cbdqc',min:1840,max:1950,hide:true}), BR,
       NUM('ill_y','Illness lasted: yrs',2,0,90,{ua:'rd_illyr',hide:true}), NUM('ill_m','mos',2,0,12,{ua:'rd_illmn',hide:true}), NUM('ill_d','days',3,0,31,{ua:'rd_illdy',hide:true}),
       T('burial','Place of burial',36,{tag:'project',help:'Cemetery or place of burial if stated. (The old manual put this in Remarks; it has its own field here.)'}), IMG ]},
-    {id:'immig', title:'If immigrant', fields:[ D('entry','Date of entry',{ua:'ri_entdt',uaq:'ri_edtqc',min:1790,max:1880}), NUM('years','Or # of years in country',2,0,90,{ua:'ri_numyr'}) ]},
+    {id:'immig', title:'If immigrant', hide:true, keepsrc:true, fields:[ D('entry','Date of entry',{ua:'ri_entdt',uaq:'ri_edtqc',min:1790,max:1880}), NUM('years','Or # of years in country',2,0,90,{ua:'ri_numyr'}) ]},
+    {id:'immigs', title:'If immigrant', repeat:true, sortBy:'entry', hint:'Add a row for each statement about immigration. Documents sometimes disagree, so enter each version with its own source.', fields:[ D('entry','Date of entry',{ua:'ri_entdt',uaq:'ri_edtqc',min:1790,max:1880}), NUM('years','Or # of years in country',2,0,90,{ua:'ri_numyr'}) ]},
     {id:'father', title:'Father', fields:[ T('name','Name (first name only)',36,{ua:'fthrname'}), BR, D('b_date','Born',{ua:'fb_date',uaq:'fb_dtqc',min:1700,max:1850}), ...PLACE('b_',['fb_city','fb_cnty','fb_stat','fb_plqc']), BR, D('d_date','Died',{ua:'fd_date',uaq:'fd_dtqc',min:1780,max:1930}), ...PLACE('d_',['fd_city','fd_cnty','fd_stat','fd_plqc']) ]},
     {id:'mother', title:'Mother', fields:[ T('name','Name (first name; NEE maiden)',36,{ua:'mthrname'}), BR, D('b_date','Born',{ua:'mb_date',uaq:'mb_dtqc',min:1700,max:1850}), ...PLACE('b_',['mb_city','mb_cnty','mb_stat','mb_plqc']), BR, D('d_date','Died',{ua:'md_date',uaq:'md_dtqc',min:1780,max:1930}), ...PLACE('d_',['md_city','md_cnty','md_stat','md_plqc']) ]},
     {id:'pres', title:'Parents\' residences', repeat:true, sortBy:'from', fields:[ C('who','Fa/Mo/Pa','FMP',{ua:'pr_fmpt1'}), ...PLACE('',['pr_city1','pr_cnty1','pr_stat1','pr_plqc1']), D('from','From',{ua:'pr_fmdt1',uaq:'pr_fdqc1',min:1750,max:1950}), D('to','To',{ua:'pr_todt1',uaq:'pr_tdqc1',min:1750,max:1950}) ]},
@@ -396,6 +399,20 @@ const SCHEMA = [
       D('arr_from','Arrears from',{ua:'arrfdt#',min:1860,max:1950}), D('arr_to','Arrears to',{ua:'arrtdt#',min:1860,max:1950}), C('writes','Writes (Y/N)','YN',{ua:'writes#'}), BR,
       T('reason','Reason (rejection / decrease)',60,{ua:'reason#'}), IMG ]},
     {id:'rmk', title:'Remarks', fields:[ AR('remarks','Remarks',{help:'Anything about the pension history that has no field: special acts, suspensions, restorations, payments to guardians.'}) ]}
+   ]},
+ { id:'deps', n:'6', title:'Depositions', ua:'Screen 8 · Affidavits (rebuilt as its own tab, with deponent name and rank)',
+   intro:'One row per affidavit or deposition that gives useful information. Record <b>who</b> gave it (name, relationship and, if military, rank), <b>which file</b> it is in (pick the application or certificate from the list, which comes from <b>0. File &amp; tracking</b>), and <b>where</b> (Fold3 page URL). Quote the original wording where you can.',
+   groups:[
+    {id:'depo', title:'Depositions & affidavits', repeat:true, sortBy:'date', hint:'The "File" list shows the application and certificate numbers entered in File & tracking. Enter those first.', fields:[
+      NM('name','Deponent name (LAST, FIRST M)',32,{tag:'project',nameRule:true,help:'The name of the person giving the testimony, as written in the file. Use the standard name rule (LAST, FIRST). The original Union Army program recorded only the deponent\'s relationship; this project also wants the name so the same person can be recognised across files and censuses.'}),
+      T('rank','Rank (if military)',24,{tag:'project',list:'RATINGS',help:'The deponent\'s military or Navy rank or rating if the file gives one (e.g. LANDSMAN, SEAMAN, CAPTAIN, SURGEON). Leave blank for civilians. Suggestions are Navy ratings; type any other rank as written.'}),
+      C('dep','Relationship','DEPONENT',{ua:'dponet#',help:'How the deponent is connected to the sailor: himself, a neighbor, a family member, a co-worker, an employer, a shipmate or other military witness, a special examiner, a doctor, or other.'}), BR,
+      AF('file','File (application / certificate)',{tag:'project',help:'Which application or certificate file this deposition is in. The list is filled from the numbers entered in 0. File & tracking, so enter those first. If the right one is missing, add it there.'}),
+      C('signs','Signs','SIGNS',{tag:'project',help:'Did the deponent sign their name or make their mark? For family members (widow, children) this is a literacy measure for the household.'}),
+      D('date','Date',{ua:'afdvdt#',min:1860,max:1950}), BR,
+      C('t1','Type','INFOTYPE',{ua:'info1t#'}), C('t2','Type 2','INFOTYPE',{ua:'info2t#'}),
+      C('period','Pre/War/After','PERIOD',{ua:'infotm#'}), D('info_date','Info date',{ua:'infodt#',min:1800,max:1950}), BR,
+      AR('desc','Pertinent testimony (original wording)',{ua:'afdesc#'}) ]}
    ]},
  { id:'aff', n:'7', hide:true, title:'Affidavits', ua:'Screen 8 · Affidavits',
    intro:'Not every affidavit, only testimony with useful information that has no other field. Record the deponent\'s <b>relationship</b>, not their name, and quote the original wording where you can.',

@@ -25,6 +25,7 @@ function checkField(f, v, row){
     return null;
   }
   if (v==null || String(v).trim()==='') return (f.req ? {lvl:'err', msg:f.l+' is required.'} : null);
+  if (f.t==='appref' && !appRefs().includes(v)) return {lvl:'warn', msg:`"${v}" is not listed in File & tracking any more. Pick a file from the list, or add it there.`};
   if (f.t==='code' && !(v in CODES[f.list])) return {lvl:'warn', msg:`"${v}" is not a listed code. Keep it only if you mean to override.`};
   if (f.t==='num'){ const n=Number(v); if (isNaN(n)) return {lvl:'err', msg:'Numbers only.'}; if (n<f.min||n>f.max) return {lvl:'warn', msg:`Expected ${f.min}–${f.max}.`}; if (!f.dec && !Number.isInteger(n)) return {lvl:'warn', msg:'Whole number expected.'}; }
   if (f.nameRule && !v.includes(',')) return {lvl:'warn', msg:'Name rule: LAST NAME, FIRST NAME M (e.g. JOHNSON, HENRY). Last name only → JOHNSON,'};
@@ -56,6 +57,16 @@ function composeDate(m,d,y){
   const pad=(x,n)=> !x ? '-'.repeat(n) : x.length>=n ? x : /^\d+$/.test(x) ? x.padStart(n,'0') : x.padStart(n,'-');
   return (!m && !d && !y) ? '' : pad(m,2)+'/'+pad(d,2)+'/'+pad(y,4);
 }
+/* the application / certificate numbers entered in File & tracking, as drop-down labels ("Application number 12345") */
+function appRefs(){
+  const out=[];
+  for (const r of ((cur && cur.meta && cur.meta.appfiles) || [])){
+    const n=String(r.number||'').trim(); if (!n) continue;
+    const lab=`${CODES.APPCERT[r.kind]||'File number'} ${n}`;
+    if (!out.includes(lab)) out.push(lab);
+  }
+  return out;
+}
 function fieldHTML(f, val, path, row){
   if (f.t==='br') return '<span class="fbreak"></span>';
   const id='f-'+path.replace(/\./g,'-');
@@ -74,6 +85,11 @@ function fieldHTML(f, val, path, row){
   if (f.t==='url'){
     const ok=/^https?:\/\//i.test(val||'');
     return `<div class="f wide">${lab}<div class="urlrow"><input class="in mono${cls}" ${da} value="${esc(val)}" autocomplete="off" spellcheck="false" placeholder="https://www.fold3.com/…"><a class="srclink" href="${ok?esc(val):'#'}" target="_blank" rel="noopener noreferrer"${ok?'':' hidden'}>Open ↗</a></div></div>`;
+  }
+  if (f.t==='appref'){
+    const L=appRefs(); const odd = val && !L.includes(val) ? `<option value="${esc(val)}" selected>${esc(val)} (not in list)</option>` : '';
+    const none = L.length ? '' : '<span class="fnote">Enter the application / certificate numbers in File &amp; tracking first.</span>';
+    return `<div class="f">${lab}<select class="in${cls}" ${da} style="--w:${Math.max(f.w||30, ...L.map(x=>x.length))}"><option value=""></option>${L.map(x=>`<option value="${esc(x)}"${x===val?' selected':''}>${esc(x)}</option>`).join('')}${odd}</select>${none}</div>`;
   }
   if (f.t==='code' && f.sel){
     const L=CODES[f.list]; const odd = val && !(val in L) ? `<option value="${esc(val)}" selected>${esc(val)} (not in list)</option>` : '';
@@ -125,6 +141,7 @@ function renderGuide(f, path){
     h+=`<div class="gcard"><div class="eyebrow">Field guide${f.tag==='navy'?' · adapted for Navy':f.tag==='project'?' · added for this project':''}</div><h3>${esc(f.l)}</h3><div class="var">${f.ua?'Old variable: '+esc(f.ua):'New field'}${path?' · '+esc(path):''}</div>`;
     if (f.t==='date') h+=`<p><b>Year, month, day</b> go in separate boxes. If the file gives only the year, or the year and month, leave the other boxes empty (1865 → --/--/1865; April 1865 → 04/--/1865). Type <kbd>-</kbd> for a single digit you can't read. An incomplete date needs a quality code.</p>`;
     if (f.t==='url') h+=`<p>Paste the page address from the Fold3 browser bar. <b>Open ↗</b> beside the box opens it.</p>`;
+    if (f.t==='appref' && !appRefs().length) h+=`<p><b>No application or certificate numbers are entered yet.</b> Add them in 0. File &amp; tracking and they will appear in this list.</p>`;
     if (f.cty) h+=`<p>Choosing a US state fills Country with US.</p>`;
     if (help) h+=`<p>${esc(help)}</p>`;
     if (f.t==='code'){ const L=CODES[f.list]; h+=`<div class="ctabwrap"><table class="ctab">${Object.entries(L).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table></div>`; }

@@ -59,6 +59,9 @@ function exampleRecord(){
   r.service.prizes=[{...G('service','prizes'), captor:'USS MINNESOTA', prize:'SCHOONER EXAMPLE', date:'--/--/1863', date_q:'6', paid:'45.50', src:'https://www.fold3.com/example/0030'}];
   r.apps.app=[{...G('apps','app'), claimant:'S', type:'N', date:'07/15/1890', age:'49', law_date:'06/27/1890', claims:[{claim:'RHEUMATISM',by_sailor:'X',by_board:'X'},{claim:'DISEASE OF HEART',by_sailor:'X',by_board:''}], amt:'8', r_from:'07/15/1890', writes:'N', src:'https://www.fold3.com/example/0021'},
               {...G('apps','app'), claimant:'W', type:'N', date:'05/10/1902', age:'55', law_date:'06/27/1890', claims:[{claim:'',by_sailor:'',by_board:''}], amt:'8', r_from:'05/10/1902', writes:'N', src:'https://www.fold3.com/example/0054'}];
+  r.personal.immigs=[{...G('personal','immigs'), entry:'--/--/1850', entry_q:'6', years:'', src:'https://www.fold3.com/example/0060'},{...G('personal','immigs'), entry:'', entry_q:'', years:'12', src:'https://www.fold3.com/example/0061'}];
+  r.deps.depo=[{...G('deps','depo'), name:'SAMPLE, THOMAS', rank:'LANDSMAN', dep:'M', file:'Application number 000001', signs:'M', date:'09/12/1890', t1:'H', period:'W', info_date:'--/--/1864', info_date_q:'6', desc:'WAS SHIPMATE ON THE MINNESOTA AND SAW HIM TAKEN SICK WITH RHEUMATISM', src:'https://www.fold3.com/example/0022'},
+               {...G('deps','depo'), name:'EXAMPLE, MARY', rank:'', dep:'F', file:'Certificate number 000002', signs:'S', date:'05/10/1902', t1:'E', period:'A', desc:'HUSBAND OWNED A HOUSE AND LOT AT NORFOLK', src:'https://www.fold3.com/example/0056'}];
   Object.assign(r.personal.enslaved,{former:'Y',freed:'--/--/1862',freed_q:'1',at_enl:'F',how:'ESCAPED TO UNION LINES'});
   return r;
 }

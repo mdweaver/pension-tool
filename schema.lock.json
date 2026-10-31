@@ -290,6 +290,21 @@
       }
      }
     },
+    "immigs": {
+     "repeat": true,
+     "fields": {
+      "entry": {
+       "type": "date",
+       "quality": true
+      },
+      "years": {
+       "type": "num"
+      },
+      "src": {
+       "type": "url"
+      }
+     }
+    },
     "father": {
      "repeat": false,
      "fields": {
@@ -1320,6 +1335,56 @@
      "fields": {
       "remarks": {
        "type": "area"
+      }
+     }
+    }
+   },
+   "deps": {
+    "depo": {
+     "repeat": true,
+     "fields": {
+      "name": {
+       "type": "text"
+      },
+      "rank": {
+       "type": "text"
+      },
+      "dep": {
+       "type": "code",
+       "list": "DEPONENT"
+      },
+      "file": {
+       "type": "appref"
+      },
+      "signs": {
+       "type": "code",
+       "list": "SIGNS"
+      },
+      "date": {
+       "type": "date",
+       "quality": true
+      },
+      "t1": {
+       "type": "code",
+       "list": "INFOTYPE"
+      },
+      "t2": {
+       "type": "code",
+       "list": "INFOTYPE"
+      },
+      "period": {
+       "type": "code",
+       "list": "PERIOD"
+      },
+      "info_date": {
+       "type": "date",
+       "quality": true
+      },
+      "desc": {
+       "type": "area"
+      },
+      "src": {
+       "type": "url"
       }
      }
     }
