@@ -13,7 +13,7 @@ const HELP = {
 "appgrdn": "In the late 1920's and 1930's, the Veterans Administration conducted a home survey of elderly veteran pensioners. They were interested in the health and welfare of the pensioners. One of the questions asked the examiner to report on the mental condition of the pensioner. Input the answer to the question exactly as it appears on the document.",
 "applaw#": "The law under which the pension was granted. Use this field when the law is described by name ('GENERAL LAW') or for any amendment dates.",
 "appldt#": "The law date under which the pension was granted. MM/DD/YYYY. If there are two law dates given, record both: the 'major' law (June 27, 1890, February 6, 1907, etc.) goes in this field and the amended law goes in the Law field.",
-"apptyp#": "Indicates the type of pension the soldier is applying for. Until the soldier was awarded a pension, all applications are considered 'New' (N), also referred to as 'Original' on the claim form. If the application is for an increase in disabilities (more disabilities or the same problems becoming more debilitating), input as an increase Disability. If the application is submitted due to a change in the pension law itself (which allowed more money for the same disability), input the application as increase Law. The only time you select 'Re-rating' 're-Issue,' or 'Additional' is if that specific word is written at the top of the claim form.",
+"apptyp#": "Indicates the type of pension the soldier is applying for. Until the soldier was awarded a pension, all applications are considered 'New (original)', also referred to as 'Original' on the claim form. If the application is for an increase in disabilities (more disabilities or the same problems becoming more debilitating), input as an increase Disability. If the application is submitted due to a change in the pension law itself (which allowed more money for the same disability), input the application as increase Law. The only time you select 'Re-rating' 're-Issue,' or 'Additional' is if that specific word is written at the top of the claim form.",
 "arrfdt#": "Indicates the commencement date for arrears. MM/DD/YYYY. Arrears are granted to award a pension from the beginning of the wound/disease or to rectify a ruling deemed to be in error. Because the Pension Board granted arrears for a specified amount of time, arrears have both a commencement and an ending date.",
 "arrtdt#": "Indicates the ending date for arrears. MM/DD/YYYY. Arrears are granted to award a pension from the beginning of the wound/disease or to rectify a ruling deemed to be in error. Because the Pension Board granted arrears for a specified amount of time, arrears have both a commencement and an ending date.",
 "attrny#": "The attorney hired by the soldier to help them apply for a pension. Follows the standard name rule, with the following additions: in the case of attorney partnerships, the first name given follows the standard name rule and the rest of the information is recorded in parentheses at the end. For example, input Foxworthy and Co. as FOXWORTHY, (AND CO) and input 'John Smith and George Wesson as SMITH, JOHN (AND WESSON, GEORGE). Attorneys' names appear on both the application and claim forms.",
@@ -28,7 +28,7 @@ const HELP = {
 "capdtqc1": "Indicates the reliability of the date at which soldier was captured as a prisoner of war. If you input an incomplete date (i.e. with dashes in it), you must record a Quality Code.",
 "captrdt1": "The date at which soldier was captured as a prisoner of war. MM/DD/YYYY. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
 "captrpl1": "The place at which soldier was captured as a prisoner of war. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
-"captrst1": "The state in which soldier was captured as a prisoner of war. Use two-digit state codes. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
+"captrst1": "The state in which soldier was captured as a prisoner of war. Choose the state or country from the list. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
 "cb_dqc01": "Indicates the reliability of the child's birth date. If you input an incomplete date (i.e. with dashes in it), you must record a Quality Code.",
 "cb_dt01": "The date of the child's birth. MM/DD/YYYY. The family circular is the best source of information about the soldier's children. The next best source for children is the widow's pension application. Widow's pensions may also include childrens' birth certificates.",
 "cd_dqc01": "Indicates the reliability of child's date of death. If you input an incomplete date (i.e. with dashes in it), you must record a Quality Code.",
@@ -43,7 +43,7 @@ const HELP = {
 "condtqc1": "Indicates the reliability of the date at which soldier was confined as a prisoner of war. If you input an incomplete date (i.e. with dashes in it), you must record a Quality Code.",
 "confndt1": "The date at which soldier was confined as a prisoner of war. MM/DD/YYYY. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
 "confnpl1": "The place at which soldier was confined as a prisoner of war. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
-"confnst1": "The state in which soldier was confined as a prisoner of war. Use two-digit state codes. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
+"confnst1": "The state in which soldier was confined as a prisoner of war. Choose the state or country from the list. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
 "dchdt#": "The soldier's date of discharge. MM/DD/YYYY. This information can be found in the MSR (indicated on the Muster-Out rolls) and in the pension.",
 "dchhd#": "Indicates whether soldier was honorably or dishonorably discharged. Only honorably discharged soldiers were eligible for a pension. This information can be found in the MSR and in the pension.",
 "dchqc#": "Indicates the reliability of the date at which soldier was discharged. If a soldier is mustered out with his company (indicated on the Company Muster-Out Roll in the MSR), input a Quality Code of 7. If you input an incomplete date (i.e. with dashes in it), you must record a Quality Code.",
@@ -56,7 +56,7 @@ const HELP = {
 "fd_dtqc": "Indicates the reliability of father's date of death. If you input an incomplete date (i.e. with dashes in it), you must record a Quality Code.",
 "fthrname": "Soldier's father's name. The standard name rule applies; do not repeat the soldier's surname. Parental information is found in the pension record; it can be found in affidavits, depositions, and letters. If the pension file type is a dependent parent, this information is always present. On rare occasions, a parent's name is found in the Military Service Record, especially in the case of a minor recruit.",
 "homecond": "In the late 1920's and 1930's, the Veterans Administration conducted a home survey of elderly veteran pensioners. They were interested in the health and welfare of the pensioners. One of the questions asked the examiner to report on the mental condition of the pensioner. Input the answer to the question exactly as it appears on the document.",
-"illwnd#": "Indicates whether the problem is an illness (I) or a wound (W)",
+"illwnd#": "Indicates whether the problem is an illness or a wound",
 "ilwdsc#": "Description of the wound or illness. Include all descriptors, i.e. ACUTE DIARRHEA, CHRONIC RHEUMATISM, GSW L LEG, etc. If you enter data into the Illness/Wound field, you must enter the description of the illness or wound, even if you just type SICK or W.",
 "ilwsev#": "Description of the severity of the illness or would. Examples include ACUTE, CHRONIC, FATAL, SEVERE, SLIGHT, FLESH. Note that often severity descriptors, such as ACUTE or CHRONIC, are entered in both the Description field as well as the Severity field.",
 "info1t#": "Indicates a general idea of what the given testimony is about.",
@@ -95,7 +95,7 @@ const HELP = {
 "pardtqc1": "Indicates the reliability of the date at which soldier was paroled as a prisoner of war. If you input an incomplete date (i.e. with dashes in it), you must record a Quality Code.",
 "paroldt1": "The date at which soldier was paroled as a prisoner of war. MM/DD/YYYY. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
 "parolpl1": "The place at which soldier was paroled as a prisoner of war. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
-"parolst1": "The state in which soldier was paroled as a prisoner of war. Use two-digit state codes. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
+"parolst1": "The state in which soldier was paroled as a prisoner of war. Choose the state or country from the list. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
 "penftype": "The pension file's final classification. If only the soldier applied for or received a pension, record the file type as \"I\" (invalid). If the soldier's widow continues the pension, or receives her own, record the file type as \"W\" (widow). \"P\" designates a pension received by dependent parents and \"M\" a pension received by a minor child or a dependent major child. This information is apparent from the request form that comes with the pension.",
 "physcond": "In the late 1920's and 1930's, the Veterans Administration conducted a home survey of elderly veteran pensioners. They were interested in the health and welfare of the pensioners. One of the questions asked the examiner to report on the mental condition of the pensioner. Input the answer to the question exactly as it appears on the document.",
 "powrslt1": "Description of results regarding the soldier's status as a prisoner of war, including transfers to other prisons, information about death, escape, furlough, etc. Prisoner of war information is most often found on the POW form in the MSR; input information exactly as it appears on that slip. Information may also be found on War Department records in the pension file. Do not infer information.",
@@ -114,10 +114,10 @@ const HELP = {
 "r_tdqc01": "Indicates the reliability of the latest known date at which soldier lived at this residence. Complete dates for residences which are not exact move-in or move-out dates will usually have a Quality Code of 9. If you input an incomplete date (i.e. with dashes in it), you must record a Quality Code. The correct use of quality codes is crucial for making residential information comprehensible.",
 "r_todt01": "The latest known date at which soldier lived at this residence. MM/DD/YYYY. If you come across another document with the same residence with a later date, delete the date already input in this field and replace it with the new, later, date. Residential information is found throughout the pension record on many different forms, including all documents the soldier submitted to the Pension Bureau. While collecting a pension record, you must constantly update residence information. The correct use of quality codes is crucial for making this information comprehensible.",
 "ra_cplqc": "Indicates the reliability of soldier's given complexion.",
-"ra_cplxn": "Soldier's complexion. Use two-digit appearance codes. Appearance information appears in the Military Service record and enlistment papers.",
-"ra_eyec": "Soldier's eye color. Use two-digit appearance codes. Appearance information appears in the Military Service record and enlistment papers.",
+"ra_cplxn": "Soldier's complexion. Choose a description from the list, or type another if the file uses one the list lacks. Appearance information appears in the Military Service record and enlistment papers.",
+"ra_eyec": "Soldier's eye color. Choose a description from the list, or type another if the file uses one the list lacks. Appearance information appears in the Military Service record and enlistment papers.",
 "ra_eyeqc": "Indicates the reliability of soldier's given eye color.",
-"ra_hairc": "Soldier's hair color. Use two-digit appearance codes. Appearance information appears in the Military Service record and enlistment papers.",
+"ra_hairc": "Soldier's hair color. Choose a description from the list, or type another if the file uses one the list lacks. Appearance information appears in the Military Service record and enlistment papers.",
 "ra_harqc": "Indicates the reliability of soldier's given hair color.",
 "rb_dtqc1": "Indicates the reliability of the soldier's given death date. If you input an incomplete date (i.e. with dashes in it), you must record a Quality Code.",
 "rd_bdtqc": "Quality code for rd_bgdt.",
@@ -151,7 +151,7 @@ const HELP = {
 "rl_pdt01": "The date at which this labor force information applies to the soldier. MM/DD/YYYY. The date can either be the date of the document from which information is found, or a date specified by an affidavit (i.e. 'Soldier was 100% disabled as of 1876'). If multiple dates are given, create a window of time by inputting each date in a separate field.",
 "rl_pqc01": "The reliability of the date associated with this labor force information. If you input an incomplete date (i.e. with dashes in it), you must record a Quality Code.",
 "rl_prt01": "A percentage rating of the soldier's ability to do labor at a given time. Convert fractions to percentages, i.e. 1/4 is 25%, 2/3 is 67%, 1/2 is 50% and 'wholly disabled' is 100%. Labor force participation information is found most frequently in affidavits. It is often a subjective opinion of neighbors, co-workers, employers, friends, or family about the amount of work the soldier could do.",
-"rl_wd01": "Indicates whether the percentage refers to the amount of work the soldier can do (W) or the extent to which he is disabled (D).",
+"rl_wd01": "Indicates whether the percentage refers to the amount of work the soldier can do or the extent to which he is disabled.",
 "rlgnqc1": "Indicates the reliability of information about the soldier and spouse's religion.",
 "rlgnsrc1": "The most complete source of marriage data. This field is intended to collect information on the source of the marriage data and should be updated as you come across better sources. It is important that this field reflects the best and most complete source document.",
 "ro_fdt01": "The earliest known date at which soldier was employed at this occupation. MM/DD/YYYY. If you come across another document with the same occupation with an earlier date, delete the date already input in this field and replace it with the new, earlier, date.",
@@ -195,12 +195,16 @@ const HELP = {
 "wm_dtqc1": "The reliability of the date of soldier's marriage to wife. If you input an incomplete date (i.e. with dashes in it), you must record a Quality Code.",
 "wm_ofct1": "The officiator of soldier and wife's marriage. The standard name rule applies; comments include the title or position of the officiator, such as Minister of the Gospel '(MG)', Reverend '(REV)', Priest '(PRIEST)', or Justice of the Peace '(JP)'. Marriage certificates are the best source for marriage information. The next-best source is the family circular. Widow's pension applications will also include marriage information.",
 "wm_plac1": "The place of soldier and wife's marriage. The marriage place includes such things as BRIDE'S HOME, METHODIST CHURCH, etc.",
-"writes#": "Indicates whether or not the soldier writes. Y/N. There is often a statement on the bottom of the claim form indicating whether the claimant writes (Claimant does _____ write'). If there is a statement to the effect that the claimant signs by mark, record N in this field. If it is ambiguous, leave this field blank."
+"writes#": "Indicates whether or not the soldier writes (Yes or No). There is often a statement on the bottom of the claim form indicating whether the claimant writes (Claimant does _____ write'). If there is a statement to the effect that the claimant signs by mark, record No in this field. If it is ambiguous, leave this field blank."
 };
 const STATES = {"AA": "Asia General", "AB": "Alberta", "AD": "Andorra", "AF": "Africa General", "AG": "Afghanistan", "AK": "Alaska", "AL": "Alabama", "AN": "Albania", "AR": "Arkansas", "AS": "Aboard Ship", "AT": "Australia", "AU": "Austria", "AX": "Australasia", "AZ": "Arizona", "BA": "Bangladesh", "BB": "Barbados", "BC": "British Columbia", "BD": "Bermuda Islands", "BE": "Belgium", "BH": "Bahamas", "BI": "Balearic Islands", "BM": "Burma", "BN": "Baden (German State)", "BO": "Bohemia", "BR": "Brandenburg (German State)", "BS": "Bosnia", "BU": "Bulgaria", "BV": "Bavaria (German State)", "CA": "California", "CB": "Caribbean Islands", "CD": "Canada General", "CE": "Central American General", "CH": "China", "CI": "Canary Islands", "CM": "Cambodia", "CN": "Channel Islands", "CO": "Colorado", "CR": "Croatia", "CS": "Corsica", "CT": "Connecticut", "CU": "Cuba", "CY": "Ceylon", "CZ": "Czechoslovakia", "DC": "District of Columbia", "DE": "Delaware", "DK": "Denmark", "DR": "Dominican Republic", "DT": "Deutschland (German State)", "EG": "Egypt", "EN": "England", "ES": "Estonia", "EU": "Europe General", "FI": "Finland", "FL": "Florida", "FR": "France", "GA": "Georgia", "GC": "Grand Cayman", "GE": "Germany", "GI": "Gibraltar", "GL": "Greenland", "GR": "Greece", "GU": "Guernsey Island", "GZ": "Georgian Ssr", "HA": "Hanover", "HE": "Hercegovia", "HI": "Hawaii", "HK": "Hong Kong", "HN": "Hostein (German State)", "HO": "Holland", "HS": "Hesse (German State)", "HT": "Haiti", "HU": "Hungary", "HW": "Crete", "IA": "Iowa", "IC": "Iceland", "ID": "Idaho", "II": "India", "IL": "Illinois", "IM": "Man", "IN": "Indiana", "IO": "Ionian Isles", "IQ": "Iraq", "IR": "Ireland", "IS": "Indonesia", "IT": "Italy", "IW": "Wight", "JA": "Japan", "JI": "Jersey Island", "JM": "Jamaica", "JO": "Jordan", "KO": "Korea", "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "LB": "Labrador", "LI": "Liechtenstein", "LL": "Alsace-Lorraine", "LN": "Lebanon", "LT": "Lithuania", "LV": "Latvia", "LX": "Luxembourg", "MA": "Massachusetts", "MB": "Manitoba", "MC": "Macedonia", "MD": "Maryland", "ME": "Maine", "MG": "Montenegro", "MI": "Michigan", "MK": "Mecklenburg (German State)", "ML": "Malta", "MN": "Minnesota", "MO": "Missouri", "MQ": "Martinique", "MR": "Moravia", "MS": "Mississippi", "MT": "Montana", "MU": "Madeira Islands", "MV": "Moldavia", "MX": "Mexico", "MY": "Malaysia", "MZ": "Monaco", "NB": "New Brunswick", "NC": "North Carolina", "ND": "North Dakota", "NE": "Nebraska", "NF": "New Foundland", "NG": "New Guinea", "NH": "New Hampshire", "NI": "Northern Ireland", "NJ": "New Jersey", "NL": "Netherlands", "NM": "New Mexico", "NP": "Nepal", "NR": "North Sea", "NS": "Nova Scotia", "NT": "North-West Territory", "NV": "Nevada", "NW": "Norway", "NY": "New York", "NZ": "New Zealand", "OC": "Oceania", "OH": "Ohio", "OK": "Oklahoma", "ON": "Ontario", "OR": "Oregon", "PA": "Pennsylvania", "PE": "Prince Edward Island", "PG": "Portugal", "PH": "Philippines", "PK": "Pakistan", "PL": "Palatinate (German State)", "PO": "Poland", "PP": "Pacific Islands", "PQ": "Quebec", "PR": "Puerto Rico", "PU": "Prussia", "RD": "Rhineland (German State)", "RH": "Rhodes", "RI": "Rhode Island", "RO": "Romania", "RU": "Russia", "SA": "South America General", "SB": "Serbia", "SC": "South Carolina", "SD": "South Dakota", "SG": "Singapore", "SI": "Shetland Islands", "SK": "Saskatchewan", "SL": "Silesia", "SN": "Saxony (German State)", "SO": "Slovakia", "SP": "Spain", "SR": "Sardinia", "SS": "Schleswig (German State)", "ST": "Scotland", "SU": "Soviet Union", "SV": "Slovenia", "SW": "Sweden", "SX": "Syria", "SY": "Sicily", "SZ": "Switzerland", "TA": "Tasmania", "TG": "Thurengia (German State)", "TH": "Thailand", "TI": "Tibet", "TN": "Tennessee", "TR": "Trinidad & Tobago", "TU": "Turkey", "TX": "Texas", "UK": "Ukraine", "US": "Usa General", "UT": "Utah", "VA": "Virginia", "VI": "Virgin Islands", "VN": "Vietnam", "VT": "Vermont", "WA": "Washington", "WI": "Wisconsin", "WL": "Wales", "WP": "Westphalia (German State)", "WR": "Wurttemberg (German State)", "WV": "West Virginia", "WY": "Wyoming", "YG": "Yugoslavia", "YU": "Yukon Territory", "ZB": "Bhutan", "ZI": "Iran", "ZM": "Middle East General", "ZS": "Israel"};
 
-/* ---------- code lists (Appendix A of the 2010 manual, plus Navy additions) ---------- */
-const CODES = {
+/* ---------- code lists (Appendix A of the 2010 manual, plus Navy additions) ----------
+   LEGACY_ALL is the original code -> description table. The form no longer stores the short codes:
+   CODES (built below) holds the descriptions, and a value is saved as its description in normal case
+   ("Widow", not "W"). Only the quality codes (QC) stay coded. LEGACY keeps the old codes so records
+   and drafts saved earlier are converted (see upgrade() in app.js and the data migration). */
+const LEGACY_ALL = {
   QC: {'1':'About','2':'Before','3':'After','4':'During the war','5':'Discrepancy','6':'Inferred','7':'Muster-in/out (company or ship)','8':'Since discharge','9':'At present time','B':'Best date when a discrepancy is present'},
   STATES: STATES,
   FILETYPE: {I:'Invalid — the sailor only',W:'Widow',P:'Dependent parent(s)',M:'Minor or dependent child'},
@@ -231,13 +235,27 @@ const CODES = {
   FS: {S:'Enslaved',F:'Free'},
   STATUS: {P:'In progress',C:'Complete',K:'Checked (QC)'}
 };
+LEGACY_ALL.STATES.US = 'United States (general)';
+/* lists have no prototype, so a typed word like "constructor" is never mistaken for a list entry by `in` or [] lookups */
+const plain = o => Object.assign(Object.create(null), o);
+const LEGACY = {}, CODES = {};
+for (const [list, m] of Object.entries(LEGACY_ALL)){
+  if (list==='QC'){ CODES.QC = plain(m); continue; }
+  LEGACY[list] = plain(m);
+  const names = Object.values(m); if (list==='STATES') names.sort((a,b)=>a.localeCompare(b));
+  CODES[list] = plain(Object.fromEntries(names.map(n=>[n,n])));
+}
+/* options added after the original lists (these have no old code) */
+CODES.STATUS['Imported (unchecked)'] = 'Imported (unchecked)';
+/* the value that choosing a US state puts in Country */
+const COUNTRY_US = 'United States';
 const RATINGS = ['LANDSMAN','ORDINARY SEAMAN','SEAMAN','BOY (FIRST CLASS)','BOY (SECOND CLASS)','BOY (THIRD CLASS)','COAL HEAVER','FIREMAN (FIRST CLASS)','FIREMAN (SECOND CLASS)','OFFICERS STEWARD','OFFICERS COOK','CABIN STEWARD','CABIN COOK','WARDROOM STEWARD','WARDROOM COOK','STEERAGE STEWARD','STEERAGE COOK','SHIPS COOK','CAPTAIN OF THE HOLD','CAPTAIN OF THE AFTERGUARD','COXSWAIN','QUARTER GUNNER','NURSE','PILOT','CONTRABAND'];
 
 /* ---------- schema helpers ---------- */
 const T   = (k,l,w,o={}) => ({k,l,t:'text',w,...o});
 const NM  = (k,l,w,o={}) => ({k,l,t:'name',w,...o});
 const D   = (k,l,o={})   => ({k,l,t:'date',w:10,q:true,...o});
-const C   = (k,l,list,o={}) => ({k,l,t:'code',list,w:o.w||Math.max(...Object.keys(CODES[list]).map(s=>s.length)),...o});
+const C   = (k,l,list,o={}) => ({k,l,t:'code',list,w:o.w||(list==='QC'?1:Math.min(30,Math.max(...Object.keys(CODES[list]).map(s=>s.length)))),nocase:list!=='QC',...o});
 const NUM = (k,l,w,min,max,o={}) => ({k,l,t:'num',w,min,max,...o});
 const AR  = (k,l,o={})   => ({k,l,t:'area',...o});
 const X   = (k,l,o={})   => ({k,l,t:'x',w:1,...o});
@@ -246,14 +264,22 @@ const BR  = {t:'br'};
 const U   = (k,l,w,o={}) => ({k,l,t:'url',w,...o});
 /* AF: a drop-down of the application / certificate numbers entered in File & tracking (meta.appfiles); stores the label, e.g. "Application number 12345" */
 const AF  = (k,l,o={}) => ({k,l,t:'appref',w:30,...o});
-// Where something happened: address, city, county, state, country (filled with US when a US state is chosen), quality.
+/* Sources. Every block that holds data has a main Fold3 URL (src) with an optional page label (src_note), plus a list of
+   further sources (srcs). An entry in srcs with a blank field is another source for the whole entry; one with a field key
+   is a source for that single field (the small link icon beside the field). Both lists are stored sparsely: only what is used. */
+const SRCN = T('src_note','Page / label',14,{tag:'project',nocase:true,help:'Short name for this source, e.g. p. 14. It is filled in automatically when the Fold3 address contains a page number; type your own if it does not. It labels the source in the drop-down of sources used in this record.'});
+const SRCS = {t:'sub', k:'srcs', l:'More sources', empty:true, fields:[
+  T('field','Field',20,{tag:'project',nocase:true,help:'Which field of this entry the source is for. Blank means the whole entry.'}),
+  U('url','Source (Fold3 page URL)',52,{tag:'project',help:'The Fold3 web address of the page this came from. Pick one already used in this record from the drop-down, or paste a new one.'}),
+  T('note','Page / label',14,{tag:'project',nocase:true,help:'Short name for this source, e.g. p. 14. Filled in from the Fold3 address when it contains a page number; otherwise type your own.'}) ]};
+// Where something happened: address, city, county, state, country (filled with United States when a US state is chosen), quality.
 // o.addr:false leaves out the address box for blocks that already have a street field.
-const US_STATES = new Set('AK AL AR AZ CA CO CT DC DE FL GA HI IA ID IL IN KS KY LA MA MD ME MI MN MO MS MT NC ND NE NH NJ NM NV NY OH OK OR PA RI SC SD TN TX UT VA VT WA WI WV WY US'.split(' '));
+const US_STATES = new Set('AK AL AR AZ CA CO CT DC DE FL GA HI IA ID IL IN KS KY LA MA MD ME MI MN MO MS MT NC ND NE NH NJ NM NV NY OH OK OR PA RI SC SD TN TX UT VA VT WA WI WV WY US'.split(' ').map(c=>LEGACY.STATES[c]));
 const PLACE = (p, ua, q=true, o={}) => [
   ...(o.addr===false ? [] : [T(p+'addr','Address',28,{tag:'project',help:'Street address, plantation, ship, institution or other specific location, exactly as the file gives it. Leave blank if there is none.'})]),
   T(p+'city','City',20,{ua:ua[0]}), T(p+'county','County',20,{ua:ua[1]}),
   C(p+'state','State','STATES',{ua:ua[2],cty:p+'country'}),
-  T(p+'country','Country',12,{tag:'project',help:'Filled in automatically as US when you pick a US state. For a place outside the US, type the country (the State box can still hold the province or country code from the manual\u2019s Appendix A).'}),
+  T(p+'country','Country',12,{tag:'project',help:'Filled in automatically as United States when you pick a US state. For a place outside the US, type the country (the State box can still hold the province or country code from the manual\u2019s Appendix A).'}),
   ...(q?[Q(p+'place_q',{ua:ua[3]})]:[])];
 const IMG = T('img','Image #',8,{help:'Image or page number in the scanned file where this was found (e.g. 0042, or 41–43). Lets a checker or a later AI pass go straight to the source.', tag:'project', hide:true}); // retired: every row now has a Fold3 source URL (SRC, added to all blocks at the end of this file)
 const SRC = U('src','Source (Fold3 page URL)',52,{tag:'project',help:'The Fold3 web address of the exact page of the pension or application file where this was found. Open that page in Fold3 and copy the address from the browser bar. If the information is spread over several pages, give the page you rely on most and say so in Remarks.'});
@@ -268,7 +294,7 @@ const SCHEMA = [
     {id:'file', title:'Record', nosrc:true, fields:[
       T('sailor_id','Sailor ID',14,{tag:'project',req:true,help:'The project Sailor ID for this man (the ID from the Reidy / NPS Black sailors database used in the prize-list matching). This is the key that links the pension to everything else, so check it twice.'}),
       T('prize_id','Prize ID(s)',18,{tag:'project',hide:true,help:'Optional. Prize ID(s) from the Abstracts of Prize Accounts that this sailor is matched to, separated by semicolons.'}),
-      C('status','Status','STATUS',{help:'P while you are working on it, C when the file is fully entered, K once a second person has checked it (10% quality check).'}),
+      C('status','Status','STATUS',{help:'In progress while you are working on it, Complete when the file is fully entered, Checked (QC) once a second person has checked it (10% quality check). Imported (unchecked) is for data brought in from a spreadsheet that nobody has checked against the file yet.'}),
       NUM('minutes','Minutes',4,0,9999,{help:'Inputting time in minutes. Counted automatically while this record is open and you are active; correct it if needed.'}),
       BR,
       T('nara_ref','NARA file / box reference',30,{tag:'project',hide:true,help:'Archival location of the file as requested (record group, series, box or file number), copied from the request slip.'}),
@@ -276,7 +302,7 @@ const SCHEMA = [
       NUM('n_images','# images',4,0,5000,{tag:'project',hide:true,help:'Total number of images or pages in the scanned file.'}),
       NUM('n_surg','# surgeons certs',3,0,200,{hide:true,help:'Number of Surgeons\' Certificates in the file. In the Union Army project these were set aside and entered as a separate dataset; count them here even if you do not enter them.'})
     ]},
-    {id:'appfiles', title:'Applications & certificates in this file', repeat:true, nosrc:true, ignore:['kind'], init:[{kind:'A'},{kind:'C'}],
+    {id:'appfiles', title:'Applications & certificates in this file', repeat:true, nosrc:true, ignore:['kind'], init:[{kind:'Application number'},{kind:'Certificate number'}],
      hint:'One row per application or certificate number on the request slip or file jacket. Two rows are ready (application, certificate); add a row for every further application, e.g. a widow\'s or a child\'s.', fields:[
       C('kind','Application / certificate','APPCERT',{tag:'navy',sel:true,help:'Whether this row is an application number or a certificate number. Navy files were indexed separately from Army files; record the number exactly as on the slip, including any letters.'}),
       T('number','Number',12,{ua:'appcrtn1'}),
@@ -292,17 +318,17 @@ const SCHEMA = [
    groups:[
     {id:'names', title:'Names and aliases', repeat:true, hint:'First row is the name the file is indexed under.', fields:[ NM('name','Name (LAST, FIRST M (COMMENTS))',40,{ua:'recname1',nameRule:true}), T('note','Where found / alias of',30,{tag:'project',help:'Optional: e.g. ALIAS, NAME AT ENLISTMENT, NAME AFTER FREEDOM, SPELLING ON DEATH CERTIFICATE.'}) ]},
     {id:'appcert', title:'Application & certificate numbers', repeat:true, hide:true, hint:'From the request slip attached to the file. Enter each number left to right.', fields:[
-      C('kind','App / Cert','APPCERT',{tag:'navy',help:'A for an application number, C for a certificate number. Navy files were indexed separately from Army files; record the number exactly as on the slip, including any letters.'}),
+      C('kind','Application or certificate','APPCERT',{tag:'navy',help:'A for an application number, C for a certificate number. Navy files were indexed separately from Army files; record the number exactly as on the slip, including any letters.'}),
       T('number','Number',12,{ua:'appcrtn1'}),
       C('claimant','Claimant','CLAIMANT',{tag:'project',help:'Whose claim the number belongs to: the sailor, his widow, a minor child, or a parent. Widows, children and parents received their own application and certificate numbers.'}) ]},
-    {id:'ftype', title:'File type', hide:true, keepsrc:true, fields:[ C('file_type','File type (Inv/Wid/Pa/Mnr)','FILETYPE',{ua:'penftype'}) ]},
+    {id:'ftype', title:'File type', hide:true, keepsrc:true, fields:[ C('file_type','File type','FILETYPE',{ua:'penftype'}) ]},
     {id:'births', title:'Birth', repeat:true, sortBy:'date', hint:'Add a row for each discrepant birth date or place. Age at a dated event can give an inferred date (quality 6).', fields:[ D('date','Birth date',{help:'Date of birth. Found on enlistment returns (as age), affidavits, family circulars, Bible records and death certificates. An approximate date can be inferred from age at a dated event (quality code 6). Add a row for each discrepant birth date or place.',ua:'rb_date1',uaq:'rb_dtqc1',min:1780,max:1856}), ...PLACE('',['rb_city1','rb_cnty1','rb_stat1','rb_plqc1']) ]},
     {id:'appear', title:'Description', nosrc:true, hint:'Navy enlistment returns and certificates of service in the file often give these.', fields:[
       C('complexion','Complexion','COMPLEXION',{ua:'ra_cplxn'}), Q('complexion_q',{ua:'ra_cplqc'}),
       C('eyes','Eyes','EYES',{ua:'ra_eyec'}), Q('eyes_q',{ua:'ra_eyeqc'}),
       C('hair','Hair','HAIR',{ua:'ra_hairc'}), Q('hair_q',{ua:'ra_harqc'}), BR,
       {...SRC, l:'Description: Fold3 page URL'}, BR,
-      C('contraband','"Contraband" in Navy records?','YN',{tag:'project',help:'Y if the naval records (enlistment return, muster roll, certificate of service) describe him as "contraband" or a contraband of war. Say where it appears in the next box.'}),
+      C('contraband','"Contraband" in Navy records?','YN',{tag:'project',help:'Yes if the naval records (enlistment return, muster roll, certificate of service) describe him as "contraband" or a contraband of war. Say where it appears in the next box.'}),
       T('contraband_note','Where it appears / as written',40,{tag:'project'}), BR,
       U('contraband_src','Contraband: Fold3 page URL',52,{tag:'project',help:'The Fold3 web address of the page of the Navy record where the contraband description appears. This is separate from the source box below, which covers the rest of the description.'}) ]},
     {id:'heights', title:'Height', repeat:true, sortBy:'date', fields:[ NUM('feet','Feet',1,3,7,{ua:'rh_feet1'}), NUM('inches','Inches',5,0,11.99,{ua:'rh_inch1',dec:true}), Q('hq',{ua:'rh_fiqc1'}), D('date','Date measured',{ua:'rh_date1',min:1840,max:1940}) ]},
@@ -316,8 +342,8 @@ const SCHEMA = [
     {id:'immigs', title:'If immigrant', repeat:true, sortBy:'entry', hint:'Add a row for each statement about immigration. Documents sometimes disagree, so enter each version with its own source.', fields:[ D('entry','Date of entry',{ua:'ri_entdt',uaq:'ri_edtqc',min:1790,max:1880}), NUM('years','Or # of years in country',2,0,90,{ua:'ri_numyr'}) ]},
     {id:'father', title:'Father', fields:[ T('name','Name (first name only)',36,{ua:'fthrname'}), BR, D('b_date','Born',{ua:'fb_date',uaq:'fb_dtqc',min:1700,max:1850}), ...PLACE('b_',['fb_city','fb_cnty','fb_stat','fb_plqc']), BR, D('d_date','Died',{ua:'fd_date',uaq:'fd_dtqc',min:1780,max:1930}), ...PLACE('d_',['fd_city','fd_cnty','fd_stat','fd_plqc']) ]},
     {id:'mother', title:'Mother', fields:[ T('name','Name (first name; NEE maiden)',36,{ua:'mthrname'}), BR, D('b_date','Born',{ua:'mb_date',uaq:'mb_dtqc',min:1700,max:1850}), ...PLACE('b_',['mb_city','mb_cnty','mb_stat','mb_plqc']), BR, D('d_date','Died',{ua:'md_date',uaq:'md_dtqc',min:1780,max:1930}), ...PLACE('d_',['md_city','md_cnty','md_stat','md_plqc']) ]},
-    {id:'pres', title:'Parents\' residences', repeat:true, sortBy:'from', fields:[ C('who','Fa/Mo/Pa','FMP',{ua:'pr_fmpt1'}), ...PLACE('',['pr_city1','pr_cnty1','pr_stat1','pr_plqc1']), D('from','From',{ua:'pr_fmdt1',uaq:'pr_fdqc1',min:1750,max:1950}), D('to','To',{ua:'pr_todt1',uaq:'pr_tdqc1',min:1750,max:1950}) ]},
-{id:'enslaved', title:'Enslavement: status', hint:'Moved here from the old Enslavement tab. Many of these sailors were enslaved before the war. Look for owners\' names in declarations, depositions of former neighbors, and Navy enlistment notes such as "contraband".', fields:[ C('former','Former slave? (Y/N)','YN',{ua:'recslave'}), D('freed','When freed',{ua:'timefrdt',uaq:'timefrqc',min:1800,max:1866}), C('at_enl','At enlistment (Slave/Free)','FS',{ua:'enlst_fs'}),
+    {id:'pres', title:'Parents\' residences', repeat:true, sortBy:'from', fields:[ C('who','Which parent','FMP',{ua:'pr_fmpt1'}), ...PLACE('',['pr_city1','pr_cnty1','pr_stat1','pr_plqc1']), D('from','From',{ua:'pr_fmdt1',uaq:'pr_fdqc1',min:1750,max:1950}), D('to','To',{ua:'pr_todt1',uaq:'pr_tdqc1',min:1750,max:1950}) ]},
+{id:'enslaved', title:'Enslavement: status', hint:'Moved here from the old Enslavement tab. Many of these sailors were enslaved before the war. Look for owners\' names in declarations, depositions of former neighbors, and Navy enlistment notes such as "contraband".', fields:[ C('former','Former slave?','YN',{ua:'recslave'}), D('freed','When freed',{ua:'timefrdt',uaq:'timefrqc',min:1800,max:1866}), C('at_enl','Status at enlistment','FS',{ua:'enlst_fs'}),
       T('how','How freed',30,{tag:'project',help:'If stated: e.g. ESCAPED TO UNION LINES, MANUMITTED, EMANCIPATION, ENLISTMENT, PURCHASED FREEDOM.'}) ]},
     {id:'owners', title:'Enslavement: owners', repeat:true, sortBy:'from', fields:[ NM('name','Owner name',36,{ua:'ownnm_01'}), T('plantation','Plantation',24,{ua:'ownres_01'}), BR, ...PLACE('',['ownct_01','owcnt_01','ownst_01'],false), D('from','From',{ua:'orfdt_01',uaq:'orfdqc_01',min:1790,max:1866}), D('to','To',{ua:'ortdt_01',uaq:'ortdqc_01',min:1790,max:1866}), NUM('paid','$ paid for slave',6,0,1e5,{ua:'compsl_01',dec:true}), Q('paid_q',{ua:'comslqc_01'}) ]},
     {id:'enslaved_rmk', title:'Enslavement: remarks', fields:[ AR('remarks','Remarks',{ua:'sc9rmks'}) ]},
@@ -329,10 +355,10 @@ const SCHEMA = [
     {id:'spouses', title:'Spouses', repeat:true, sortBy:'m_date', hint:'Old limit was 3; enter all. Discrepant info for the same marriage goes in Remarks, not a new row.', fields:[
       NM('name','Name (MARRIED LAST, FIRST (NEE MAIDEN))',44,{ua:'wifname1'}), D('b_date','Born',{ua:'wb_date1',uaq:'wb_dtqc1',min:1790,max:1910}), D('d_date','Died',{ua:'wd_date1',uaq:'wd_dtqc1',min:1825,max:2000}), BR,
       D('m_date','Married',{ua:'wm_date1',uaq:'wm_dtqc1',min:1820,max:1950}), T('m_place','Marriage place',20,{ua:'wm_plac1'}), ...PLACE('m_',['wm_city1','wm_cnty1','wm_stat1','wm_plqc1']), BR,
-      NM('officiator','Officiator',36,{ua:'wm_ofct1',hide:true}), C('divsep','Div/Sep','DS',{ua:'wm_dors1'}), D('ds_date','Date',{ua:'wm_dsdt1',uaq:'wm_dsqc1',min:1825,max:1975}), BR,
+      NM('officiator','Officiator',36,{ua:'wm_ofct1',hide:true}), C('divsep','Divorced or separated','DS',{ua:'wm_dors1'}), D('ds_date','Date',{ua:'wm_dsdt1',uaq:'wm_dsqc1',min:1825,max:1975}), BR,
       T('religion','Religion',30,{ua:'religon1'}), Q('religion_q',{ua:'rlgnqc1'}), T('source','Best source',26,{ua:'rlgnsrc1',hide:true}), IMG ]},
     {id:'children', title:'Children', repeat:true, sortBy:'b_date', hint:'Old limit was 15; enter all. Don\'t repeat the surname, but record married daughters\' surnames.', fields:[
-      NM('name','Name',36,{ua:'chname01'}), C('sex','M/F','MF',{ua:'c_sex01'}), C('ld','L/D','LD',{ua:'c_lord01'}), D('ld_date','As of',{ua:'c_lddt01',uaq:'c_ldqc01',min:1840,max:1950}), BR,
+      NM('name','Name',36,{ua:'chname01'}), C('sex','Sex','MF',{ua:'c_sex01'}), C('ld','Living or dead','LD',{ua:'c_lord01'}), D('ld_date','As of',{ua:'c_lddt01',uaq:'c_ldqc01',min:1840,max:1950}), BR,
       D('b_date','Born',{ua:'cb_dt01',uaq:'cb_dqc01',min:1840,max:1935}), ...PLACE('b_',['cb_cty01','cb_cnt01','cb_st01','cb_pqc01']), BR,
       D('d_date','Died',{ua:'cd_dt01',uaq:'cd_dqc01',min:1840,max:1990}), ...PLACE('d_',['cd_cty01','cd_cnt01','cd_st01','cd_pqc01']) ]},
     {id:'siblings', title:'Siblings', repeat:true, fields:[ NM('name','Name',36,{ua:'sibname1'}), D('b_date','Born',{ua:'sb_date1',uaq:'sb_dtqc1',min:1780,max:1870}) ]},
@@ -344,7 +370,7 @@ const SCHEMA = [
     {id:'res', title:'Residences', repeat:true, sortBy:'from', fields:[ T('street','Address (street)',30,{ua:'r_str01'}), ...PLACE('',['r_city01','r_cnty01','r_stat01'],false,{addr:false}), D('from','From',{ua:'r_fmdt01',uaq:'r_fdqc01',min:1810,max:1950}), D('to','To',{ua:'r_todt01',uaq:'r_tdqc01',min:1810,max:1950}) ]},
     {id:'livwith', title:'Living with', repeat:true, sortBy:'date', hint:'Only when not with parents (before marriage) or spouse.', fields:[ NM('name','Name',25,{ua:'r_lvwth1'}), T('rel','Relationship',15,{ua:'r_lwrln1'}), D('date','Date',{ua:'r_lvwdt1',uaq:'r_lwdqc1',min:1810,max:1950}) ]},
     {id:'jobs', title:'Occupations', repeat:true, sortBy:'from', hint:'Spell out except F, LAB, F LAB, TMS. Seafaring work after discharge counts.', fields:[ T('job','Occupation',26,{ua:'ro_job01'}), D('from','From',{ua:'ro_fdt01',uaq:'ro_fqc01',min:1810,max:1950}), D('to','To',{ua:'ro_tdt01',uaq:'ro_tqc01',min:1810,max:1950}) ]},
-    {id:'labor', title:'Labor force participation', repeat:true, sortBy:'date', fields:[ NUM('pct','%',3,0,100,{ua:'rl_prt01'}), C('wd','W/D','WD',{ua:'rl_wd01'}), T('desc','Or description',50,{ua:'rl_pds01'}), D('date','At',{ua:'rl_pdt01',uaq:'rl_pqc01',min:1860,max:1950}) ]},
+    {id:'labor', title:'Labor force participation', repeat:true, sortBy:'date', fields:[ NUM('pct','%',3,0,100,{ua:'rl_prt01'}), C('wd','Work or disability','WD',{ua:'rl_wd01'}), T('desc','Or description',50,{ua:'rl_pds01'}), D('date','At',{ua:'rl_pdt01',uaq:'rl_pqc01',min:1860,max:1950}) ]},
     {id:'finance', title:'Poverty/Dependency', repeat:true, sortBy:'date', hint:'Always fill at least one row, even if UNKNOWN with no date.', fields:[ T('state','Poverty/Dependency',40,{ua:'rf_stof1'}), D('date','At',{ua:'rf_stdt1',uaq:'rf_stqc1',min:1860,max:1950}) ]},
     {id:'wealth', title:'Wealth & income', repeat:true, sortBy:'date', hint:'Anything dated within a year of death counts as his wealth unless stated otherwise.', fields:[ C('type','Type','WEALTH',{ua:'rw_inf01'}), T('source','Source document',30,{ua:'rw_ins01'}), D('date','Date',{ua:'rw_ind01',uaq:'rw_iqc01',min:1860,max:1950}), NUM('amt','Amount $',8,0,1e7,{ua:'rw_amt01',dec:true}), BR, T('desc','Description',53,{ua:'rw_des01'}), IMG ]},
     {id:'rmk', title:'Remarks', fields:[ AR('remarks','Remarks',{ua:'sc3rmks'}) ]}
@@ -360,7 +386,7 @@ const SCHEMA = [
     {id:'vessels', title:'Vessels & duties', repeat:true, sortBy:'from', hint:'The old manual already put naval service here: ship name in the Duty field, dates of service on that ship.', fields:[ T('duty','Vessel or duty',36,{ua:'milduty1'}), D('from','From',{ua:'mildfdt1',uaq:'mildfqc1',min:1850,max:1870}), D('to','To',{ua:'mildtdt1',uaq:'mildtqc1',min:1850,max:1870}) ]},
     {id:'ratings', title:'Changes in rating', repeat:true, sortBy:'date', fields:[ T('rating','New rating',22,{tag:'navy',list:'RATINGS',help:'Rating after a promotion, reduction or transfer, spelled out.'}), T('vessel','On vessel',22,{tag:'navy'}), D('date','Date',{ua:'chgdt1',uaq:'chgqc1',min:1850,max:1870}), T('desc','Description',24,{ua:'chgdesc1',help:'Explanation of the change, e.g. PROMOTED, REDUCED, TRANSFERRED.'}) ]},
     {id:'dch', title:'Discharges', repeat:true, sortBy:'date', hint:'Pair each discharge with its enlistment.', fields:[
-      D('date','Discharged',{ua:'dchdt#',uaq:'dchqc#',min:1850,max:1870}), C('hd','Hon/Dis','HD',{ua:'dchhd#'}), C('reason','Reason','DCHRSN',{ua:'dchrn#'}), T('vessel','From vessel',22,{tag:'navy'}), BR,
+      D('date','Discharged',{ua:'dchdt#',uaq:'dchqc#',min:1850,max:1870}), C('hd','Discharge','HD',{ua:'dchhd#'}), C('reason','Reason','DCHRSN',{ua:'dchrn#'}), T('vessel','From vessel',22,{tag:'navy'}), BR,
       ...PLACE('',['dccty#','dccnt#','dchst#'],false), NUM('unfit','# days unfit',3,0,500,{ua:'unftd#'}), T('cause','Cause',40,{ua:'unftc#'}) ]},
     {id:'battles', title:'Engagements', repeat:true, sortBy:'date', hint:'Captures, bombardments, actions. Record by Union name; if unsure two names are one event, record both.', fields:[ T('name','Engagement',35,{ua:'battle01'}), D('date','Date',{ua:'batldt01',uaq:'batdqc01',min:1855,max:1870}) ]},
     {id:'actions', title:'Desertion, AWOL, arrest, furlough', repeat:true, sortBy:'from', hint:'Desertion charges ("R" marks) were often contested in pension claims; record both the charge and any removal.', fields:[ C('type','Type','ACTION',{ua:'milcact1'}), D('from','From',{ua:'milcfdt1',uaq:'milcfqc1',min:1855,max:1900}), D('to','To',{ua:'milctdt1',uaq:'milctqc1',min:1855,max:1900}), BR, T('place','Place',40,{ua:'milcplc1'}), T('reason','Reason',40,{ua:'milcrsn1'}), T('legal','Legal action / result',40,{ua:'milcleg1'}) ]},
@@ -373,7 +399,7 @@ const SCHEMA = [
       D('date','Date of capture',{tag:'project',min:1861,max:1870}),
       NUM('paid','Prize payment received $',8,0,1e6,{tag:'project',dec:true,help:'Amount of prize money the sailor says he received for this capture, in dollars. Leave blank if the file gives no amount.'}) ]},
     {id:'ill', title:'In-service illnesses & injuries', repeat:true, sortBy:'date', hint:'Moved here from the old tab. Use only for official reports in the pension file (Navy Department or Bureau of Medicine reports of hospital treatment, surgeon\'s reports of injury). Disabilities the sailor claims go on Applications.', fields:[
-      C('iw','I/W','IW',{ua:'illwnd#'}), T('desc','Description',36,{ua:'ilwdsc#',help:'Illness or wound with all descriptors, e.g. ACUTE DIARRHEA, CHRONIC RHEUMATISM, GSW L LEG, HERNIA, FRACTURE R ARM.'}), T('sev','Severity',10,{ua:'ilwsev#',help:'ACUTE, CHRONIC, FATAL, SEVERE, SLIGHT, FLESH.'}), D('date','Date received / contracted',{min:1855,max:1870}), BR,
+      C('iw','Illness or wound','IW',{ua:'illwnd#'}), T('desc','Description',36,{ua:'ilwdsc#',help:'Illness or wound with all descriptors, e.g. ACUTE DIARRHEA, CHRONIC RHEUMATISM, GSW L LEG, HERNIA, FRACTURE R ARM.'}), T('sev','Severity',10,{ua:'ilwsev#',help:'ACUTE, CHRONIC, FATAL, SEVERE, SLIGHT, FLESH.'}), D('date','Date received / contracted',{min:1855,max:1870}), BR,
       T('where','Where (vessel, place, engagement)',30,{tag:'navy'}), T('hospital','Hospital or ship',26,{tag:'navy',help:'e.g. NAVAL HOSPITAL NORFOLK, HOSPITAL SHIP RED ROVER, IN QUARTERS (sick bay).'}), D('adm','Admitted',{min:1855,max:1870}), D('rel','Released',{min:1855,max:1870}), BR,
       T('result','Result of treatment',36,{help:'RETURNED TO DUTY, DISCHARGED, TRANSFERRED, DIED, etc.'}), T('source','Source document',26,{tag:'project'}), IMG ]},
     {id:'rmk', title:'Remarks', fields:[ AR('remarks','Remarks',{ua:'sc5rmks'}) ]}
@@ -382,12 +408,12 @@ const SCHEMA = [
    intro:'The old Screen 6 followed the Army\'s carded medical records, which we don\'t have. Use this only for <b>official reports in the pension file</b> (Navy Department or Bureau of Medicine reports of hospital treatment, surgeon\'s reports of injury). Disabilities the sailor claims go on Applications.',
    groups:[
     {id:'ill', title:'Illnesses & injuries', repeat:true, sortBy:'date', fields:[
-      C('iw','I/W','IW',{ua:'illwnd#'}), T('desc','Description',36,{ua:'ilwdsc#',help:'Illness or wound with all descriptors, e.g. ACUTE DIARRHEA, CHRONIC RHEUMATISM, GSW L LEG, HERNIA, FRACTURE R ARM.'}), T('sev','Severity',10,{ua:'ilwsev#',help:'ACUTE, CHRONIC, FATAL, SEVERE, SLIGHT, FLESH.'}), D('date','Date received / contracted',{min:1855,max:1870}), BR,
+      C('iw','Illness or wound','IW',{ua:'illwnd#'}), T('desc','Description',36,{ua:'ilwdsc#',help:'Illness or wound with all descriptors, e.g. ACUTE DIARRHEA, CHRONIC RHEUMATISM, GSW L LEG, HERNIA, FRACTURE R ARM.'}), T('sev','Severity',10,{ua:'ilwsev#',help:'ACUTE, CHRONIC, FATAL, SEVERE, SLIGHT, FLESH.'}), D('date','Date received / contracted',{min:1855,max:1870}), BR,
       T('where','Where (vessel, place, engagement)',30,{tag:'navy'}), T('hospital','Hospital or ship',26,{tag:'navy',help:'e.g. NAVAL HOSPITAL NORFOLK, HOSPITAL SHIP RED ROVER, IN QUARTERS (sick bay).'}), D('adm','Admitted',{min:1855,max:1870}), D('rel','Released',{min:1855,max:1870}), BR,
       T('result','Result of treatment',36,{help:'RETURNED TO DUTY, DISCHARGED, TRANSFERRED, DIED, etc.'}), T('source','Source document',26,{tag:'project'}), IMG ]}
    ]},
  { id:'apps', n:'5', title:'Applications & rulings', ua:'Screen 7 · Application and rulings',
-   intro:'One row per application/claim-form pair. Rows can be entered in any order; use <b>Sort by date</b> before finishing (the old Alt-S). <b>Writes (Y/N)</b> on the claim form is one of our literacy measures, so fill it whenever the form says.',
+   intro:'One row per application/claim-form pair. Rows can be entered in any order; use <b>Sort by date</b> before finishing (the old Alt-S). <b>Writes</b> on the claim form is one of our literacy measures, so fill it whenever the form says.',
    groups:[
     {id:'app', title:'Applications', repeat:true, sortBy:'date', fields:[
       C('claimant','Claimant','CLAIMANT',{tag:'project',help:'Who filed: the sailor, widow, minor child (via guardian) or parent. The old screen assumed the soldier; Navy files often hold the widow\'s and children\'s claims too.'}),
@@ -395,8 +421,8 @@ const SCHEMA = [
       T('law','Law',26,{ua:'applaw#'}), D('law_date','or Law date',{ua:'appldt#',min:1790,max:1950}), NM('attorney','Attorney',36,{ua:'attrny#'}), BR,
       {t:'sub', k:'claims', l:'Claims', fields:[ T('claim','Disability claimed / allowed',44,{ua:'a_clm#'}), X('by_sailor','Claimed',{ua:'a_sclm#'}), X('by_board','Allowed',{ua:'a_bclm#'}) ]},
       BR,
-      NUM('amt','Ruling $ / month',6,0,500,{ua:'rulamt#',dec:true}), C('idr','Inc/Dec/Rej','IDR',{ua:'rulidr#'}), D('r_from','Ruling from',{ua:'rulfdt#',min:1860,max:1950}), D('r_to','To',{ua:'rultdt#',min:1860,max:1950}), BR,
-      D('arr_from','Arrears from',{ua:'arrfdt#',min:1860,max:1950}), D('arr_to','Arrears to',{ua:'arrtdt#',min:1860,max:1950}), C('writes','Writes (Y/N)','YN',{ua:'writes#'}), BR,
+      NUM('amt','Ruling $ / month',6,0,500,{ua:'rulamt#',dec:true}), C('idr','Ruling','IDR',{ua:'rulidr#'}), D('r_from','Ruling from',{ua:'rulfdt#',min:1860,max:1950}), D('r_to','To',{ua:'rultdt#',min:1860,max:1950}), BR,
+      D('arr_from','Arrears from',{ua:'arrfdt#',min:1860,max:1950}), D('arr_to','Arrears to',{ua:'arrtdt#',min:1860,max:1950}), C('writes','Writes?','YN',{ua:'writes#'}), BR,
       T('reason','Reason (rejection / decrease)',60,{ua:'reason#'}), IMG ]},
     {id:'rmk', title:'Remarks', fields:[ AR('remarks','Remarks',{help:'Anything about the pension history that has no field: special acts, suspensions, restorations, payments to guardians.'}) ]}
    ]},
@@ -411,7 +437,7 @@ const SCHEMA = [
       C('signs','Signs','SIGNS',{tag:'project',help:'Did the deponent sign their name or make their mark? For family members (widow, children) this is a literacy measure for the household.'}),
       D('date','Date',{ua:'afdvdt#',min:1860,max:1950}), BR,
       C('t1','Type','INFOTYPE',{ua:'info1t#'}), C('t2','Type 2','INFOTYPE',{ua:'info2t#'}),
-      C('period','Pre/War/After','PERIOD',{ua:'infotm#'}), D('info_date','Info date',{ua:'infodt#',min:1800,max:1950}), BR,
+      C('period','Period','PERIOD',{ua:'infotm#'}), D('info_date','Info date',{ua:'infodt#',min:1800,max:1950}), BR,
       AR('desc','Pertinent testimony (original wording)',{ua:'afdesc#'}) ]}
    ]},
  { id:'aff', n:'7', hide:true, title:'Affidavits', ua:'Screen 8 · Affidavits',
@@ -419,13 +445,13 @@ const SCHEMA = [
    groups:[
     {id:'aff', title:'Affidavits & depositions', repeat:true, sortBy:'date', fields:[
       C('dep','Deponent','DEPONENT',{ua:'dponet#'}), C('signs','Signs','SIGNS',{tag:'project',help:'Did the deponent sign their name or make their mark? For family members (widow, children) this is a literacy measure for the household.'}), D('date','Date',{ua:'afdvdt#',min:1860,max:1950}),
-      C('t1','Type','INFOTYPE',{ua:'info1t#'}), C('t2','Type 2','INFOTYPE',{ua:'info2t#'}), C('period','Pre/War/After','PERIOD',{ua:'infotm#'}), D('info_date','Info date',{ua:'infodt#',min:1800,max:1950}), BR,
+      C('t1','Type','INFOTYPE',{ua:'info1t#'}), C('t2','Type 2','INFOTYPE',{ua:'info2t#'}), C('period','Period','PERIOD',{ua:'infotm#'}), D('info_date','Info date',{ua:'infodt#',min:1800,max:1950}), BR,
       AR('desc','Pertinent testimony (original wording)',{ua:'afdesc#'}), IMG ]}
    ]},
  { id:'slavery', n:'8', hide:true, title:'Enslavement', ua:'Screen 9 · Slave information',
    intro:'Many of these sailors were enslaved before the war. Look for owners\' names in declarations, depositions of former neighbors, and Navy enlistment notes such as "contraband". The USCT officer/enlisted questions are dropped.',
    groups:[
-    {id:'status', title:'Status', fields:[ C('former','Former slave? (Y/N)','YN',{ua:'recslave'}), D('freed','When freed',{ua:'timefrdt',uaq:'timefrqc',min:1800,max:1866}), C('at_enl','At enlistment (Slave/Free)','FS',{ua:'enlst_fs'}),
+    {id:'status', title:'Status', fields:[ C('former','Former slave?','YN',{ua:'recslave'}), D('freed','When freed',{ua:'timefrdt',uaq:'timefrqc',min:1800,max:1866}), C('at_enl','Status at enlistment','FS',{ua:'enlst_fs'}),
       T('how','How freed',30,{tag:'project',help:'If stated: e.g. ESCAPED TO UNION LINES, MANUMITTED, EMANCIPATION, ENLISTMENT, PURCHASED FREEDOM.'}) ]},
     {id:'owners', title:'Owners', repeat:true, sortBy:'from', fields:[ NM('name','Owner name',36,{ua:'ownnm_01'}), T('plantation','Plantation',24,{ua:'ownres_01'}), BR, ...PLACE('',['ownct_01','owcnt_01','ownst_01'],false), D('from','From',{ua:'orfdt_01',uaq:'orfdqc_01',min:1790,max:1866}), D('to','To',{ua:'ortdt_01',uaq:'ortdqc_01',min:1790,max:1866}), NUM('paid','$ paid for slave',6,0,1e5,{ua:'compsl_01',dec:true}), Q('paid_q',{ua:'comslqc_01'}) ]},
     {id:'rmk', title:'Remarks', fields:[ AR('remarks','Remarks',{ua:'sc9rmks'}) ]}
@@ -447,6 +473,12 @@ const SCHEMA = [
    Every block that holds data (not Remarks, not blocks marked nosrc, not hidden blocks unless marked keepsrc because the key was already
    saved) gets a Fold3 source URL on each row. */
 for (const sec of SCHEMA) if (!sec.hide) for (const g of sec.groups) if ((!g.hide || g.keepsrc) && !g.nosrc && g.id!=='rmk' && !g.id.endsWith('_rmk')) g.fields.push(BR, SRC);
+/* page label and list of further sources, for every visible block that has a source URL (and for the Applications & certificates list, whose rows have their own Fold3 URL) */
+for (const sec of SCHEMA) for (const g of sec.groups) for (const f of g.fields) if (f.cty){ const c=g.fields.find(x=>x.k===f.cty); if (c) c.nocase=true; } // Country is typed in normal case ("United States")
+for (const sec of SCHEMA) if (!sec.hide) for (const g of sec.groups) if (!g.hide){
+  if (g.fields.some(f=>f.k==='src') && !g.fields.some(f=>f.k==='src_note')) g.fields.push(SRCN);
+  if ((g.fields.some(f=>f.k==='src') || g.id==='appfiles') && !g.fields.some(f=>f.k==='srcs')) g.fields.push(SRCS);
+}
 const visSections = () => SCHEMA.filter(s => !s.hide);
 const visGroups = s => s.groups.filter(g => !g.hide);
 // Visible fields of a block; leading, trailing and doubled line breaks (left by hidden fields) are dropped.

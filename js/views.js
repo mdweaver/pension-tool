@@ -15,8 +15,8 @@ function renderTop(){
   for (const id of ['b-records','b-new','b-exp','b-me']) { const b=document.getElementById(id); if (b) b.hidden=!signed || (id==='b-new' && !(ME && ME.active)); }
   if (signed) $('#b-me').textContent = `${ME.display_name||ME.email}${isAdmin()?' · admin':''}`;
   if (!signed || !cur){ $('#cur').innerHTML = signed ? '<span class="sid">No file open</span>' : ''; renderSaveState(); return; }
-  const st=cur.meta.file.status||'P';
-  $('#cur').innerHTML=`<b>${esc(recName(cur))}</b><span class="sid">${esc(cur.meta.file.sailor_id||'no Sailor ID')}</span><span class="pill st-${st==='C'?'complete':st==='K'?'checked':'prog'}">${esc(CODES.STATUS[st]||st)}</span>${curMeta.deleted?'<span class="pill example">Deleted</span>':''}`;
+  const st=cur.meta.file.status||'In progress';
+  $('#cur').innerHTML=`<b>${esc(recName(cur))}</b><span class="sid">${esc(cur.meta.file.sailor_id||'no Sailor ID')}</span><span class="pill st-${st==='Complete'?'complete':st==='Checked (QC)'?'checked':'prog'}">${esc(CODES.STATUS[st]||st)}</span>${curMeta.deleted?'<span class="pill example">Deleted</span>':''}`;
   renderSaveState();
 }
 function renderNav(){
@@ -51,6 +51,7 @@ function renderMain(){
   const VS=visSections(), i=VS.indexOf(s);
   h+=`<div class="tools" style="margin-top:6px">${i>0?`<button class="btn" data-sec="${VS[i-1].id}" type="button">← ${esc(VS[i-1].title)}</button>`:''}${i<VS.length-1?`<button class="btn" data-sec="${VS[i+1].id}" type="button">${esc(VS[i+1].title)} →</button>`:''}<button class="btn primary" data-act="save" type="button">Save</button></div>`;
   $('#main').innerHTML=h;
+  refreshSrcList();
 }
 
 /* ---------- sign-in ---------- */
@@ -111,7 +112,10 @@ function pathLabel(path){
   let lab=`${s.title} › ${g.title}`; let i=2;
   if (g.repeat && /^\d+$/.test(ks[2]||'')){ lab+=` ${+ks[2]+1}`; i=3; }
   const sub=g.fields.find(f=>f.t==='sub'&&f.k===ks[i]);
-  if (sub){ lab+=` › ${sub.l} ${String.fromCharCode(65+(+ks[i+1]||0))}`; }
+  if (sub && sub.k==='srcs'){ // extra sources: number them, and say which field a per-field source is for when we can
+    const e=cur && getPath(cur, ks.slice(0,i+2).join('.')); const fk=e && e.field; const ff=fk && g.fields.find(x=>x.k===fk);
+    lab+=` › More sources ${(+ks[i+1]||0)+1}${ff?` (for ${ff.l})`:''}`;
+  } else if (sub){ lab+=` › ${sub.l} ${String.fromCharCode(65+(+ks[i+1]||0))}`; }
   const f=fieldForPath(path);
   return lab+' › '+(f?f.l:ks[ks.length-1]);
 }
@@ -158,9 +162,36 @@ async function renderTeam(){
     <div class="sechead" style="margin-top:22px"><h1 style="font-size:18px">Activity by day</h1><span class="ua">from the edit history</span></div>
     <div class="rtab-wrap"><table class="rtab"><thead><tr><th>Day</th><th>Person</th><th>Records created</th><th>Saves</th><th>Records touched</th><th>First save</th><th>Last save</th></tr></thead><tbody>
     ${act.length?act.map(a=>`<tr><td class="m">${esc(a.day)}</td><td>${esc(a.display_name)}</td><td class="m">${a.records_created}</td><td class="m">${a.saves}</td><td class="m">${a.records_touched}</td><td class="m">${esc(fmtTime(a.first_save))}</td><td class="m">${esc(fmtTime(a.last_save))}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">No saves yet.</td></tr>'}
-    </tbody></table></div></div>`;
+    </tbody></table></div>
+    <div class="sechead" style="margin-top:22px"><h1 style="font-size:18px">Values outside the lists</h1><span class="ua">what RAs typed instead of choosing</span></div>
+    <p class="intro">Fields with a list also accept other text. This shows every such value across all records. <b>Add to list</b> puts it in that list's drop-down for everyone; records already holding it need no change. Removing it later leaves records as they are.</p>
+    <div class="tools"><button class="btn" data-act="customvals" type="button">Show values outside the lists</button></div><div id="customvals"></div></div>`;
     $('#main').innerHTML=h;
   } catch(e){ $('#main').innerHTML=`<div class="callout">${esc(errMsg(e,'Could not load the team.'))}</div>`; }
+}
+/* every value in a list-backed field that is not one of the list's own entries, counted across records */
+function customValues(recs){
+  const tally=new Map();
+  for (const r of recs){
+    const label=(r.meta&&r.meta.file&&r.meta.file.sailor_id) || ((r.personal&&r.personal.names&&r.personal.names[0]||{}).name) || r._uid;
+    const seen=(f,v)=>{ if (typeof v!=='string') return; const t=v.trim(); if (!t || t in CODES[f.list]) return;
+      const key=f.list+'\u0000'+t.toLowerCase(); const e=tally.get(key)||{list:f.list,value:t,n:0,recs:new Map(),forms:new Set()}; e.n++; e.recs.set(r._uid,label); e.forms.add(t); tally.set(key,e); };
+    const walk=(fields,obj)=>{ for (const f of fields){ if (f.t==='sub'){ (obj[f.k]||[]).forEach(x=>x&&walk(f.fields,x)); continue; } if (f.t==='code' && f.list!=='QC' && !f.hide) seen(f,obj[f.k]); } };
+    for (const s of SCHEMA) if (!s.hide) for (const g of s.groups){ if (g.hide) continue; const v=r[s.id]&&r[s.id][g.id]; if (!v) continue; if (g.repeat){ if (Array.isArray(v)) v.forEach(x=>x&&walk(g.fields,x)); } else walk(g.fields,v); }
+  }
+  return [...tally.values()].sort((a,b)=>a.list.localeCompare(b.list)||b.n-a.n);
+}
+async function showCustomValues(){
+  const box=$('#customvals'); if (!box) return; box.innerHTML='<p class="intro">Reading all records…</p>';
+  try {
+    const [recs, opts, team] = await Promise.all([API.allData(), API.options(), API.team()]);
+    const rows=customValues(recs.map(upgrade)); const who=Object.fromEntries(team.map(p=>[p.id,p.display_name]));
+    const listLabel=l=>{ const f=[]; for (const s of SCHEMA) for (const g of s.groups) for (const x of g.fields) if (x.t==='code' && x.list===l && !f.includes(x.l)) f.push(x.l); return f.slice(0,3).join(', ') || l; };
+    let h = rows.length ? `<div class="rtab-wrap"><table class="rtab"><thead><tr><th>List</th><th>Value typed</th><th>Times</th><th>Sailor IDs</th><th></th></tr></thead><tbody>${rows.map(t=>{ const ids=[...t.recs.values()]; return `<tr><td class="m" title="${esc(t.list)}">${esc(listLabel(t.list))}</td><td>${esc(t.value)}${t.forms.size>1?` <span class="ua">(also typed as ${esc([...t.forms].filter(x=>x!==t.value).join(', '))})</span>`:''}</td><td class="m">${t.n}</td><td class="m">${esc(ids.slice(0,4).join(', '))}${ids.length>4?` +${ids.length-4} more`:''}</td><td><button class="btn" type="button" data-act="promote" data-list="${esc(t.list)}" data-value="${esc(t.value)}">Add to list</button></td></tr>`; }).join('')}</tbody></table></div>` : '<p class="intro">Nothing waiting: every value in every list-backed field is one of the list\'s own entries.</p>';
+    h += `<div class="sechead" style="margin-top:18px"><h1 style="font-size:16px">Options you have added</h1><span class="ua">${opts.length} so far</span></div>`;
+    h += opts.length ? `<div class="rtab-wrap"><table class="rtab"><thead><tr><th>List</th><th>Option</th><th>Added by</th><th>When</th><th></th></tr></thead><tbody>${opts.map(o=>`<tr><td class="m" title="${esc(o.list)}">${esc(listLabel(o.list))}</td><td>${esc(o.value)}</td><td>${esc(who[o.created_by]||'')}</td><td class="m">${esc(fmtTime(o.created_at))}</td><td><button class="btn ghost" type="button" data-act="rmopt" data-list="${esc(o.list)}" data-value="${esc(o.value)}">Remove</button></td></tr>`).join('')}</tbody></table></div><p class="intro">Removing an option leaves saved records as they are; the value then counts as typed text again.</p>` : '<p class="intro">None yet.</p>';
+    box.innerHTML=h;
+  } catch(e){ box.innerHTML=`<div class="callout">${esc(errMsg(e,'Could not read the records.'))}</div>`; }
 }
 
 /* ---------- account ---------- */

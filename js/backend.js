@@ -48,6 +48,9 @@ function SupabaseBackend(url, key){
     async activity(){ return chk(await sb.from('ra_activity').select('*').order('day', { ascending: false }).limit(300)); },
     async setMyName(n){ chk(await sb.rpc('set_my_display_name', { p_name: n })); },
     async changePassword(pw){ const r = await sb.auth.updateUser({ password: pw }); if (r.error) throw r.error; },
+    async options(){ return chk(await sb.from('list_options').select('list,value,created_by,created_at').order('list').order('value')); },
+    async addOption(list, value){ chk(await sb.from('list_options').insert({ list, value })); },
+    async removeOption(list, value){ chk(await sb.from('list_options').delete().eq('list', list).eq('value', value)); },
     async allData(){
       let all = [];
       for (let from = 0; ; from += 500){
@@ -104,7 +107,7 @@ function DemoBackend(){
     ], records: {}, versions: [] };
     // A fictional record: Ada starts it yesterday, Ben adds to it this morning.
     const ex = exampleRecord(); ex._uid = 'rexample0001';
-    const first = clone(ex); first.family.children = first.family.children.slice(0, 1); first.service.prizes = [blankFields(SCHEMA.find(s => s.id === 'service').groups.find(g => g.id === 'prizes').fields)]; first.meta.file.status = 'P';
+    const first = clone(ex); first.family.children = first.family.children.slice(0, 1); first.service.prizes = [blankFields(SCHEMA.find(s => s.id === 'service').groups.find(g => g.id === 'prizes').fields)]; first.meta.file.status = 'In progress';
     write('u-ada', ex._uid, first, 0, iso(60 * 20));
     const second = clone(first); second.family.children = clone(ex.family.children); second.service.prizes = clone(ex.service.prizes); second.personal.names[0].name = 'EXAMPLE, JAMES HENRY';
     write('u-ben', ex._uid, second, 1, iso(90));
@@ -162,6 +165,19 @@ function DemoBackend(){
     },
     async setMyName(n){ fresh(); meP().display_name = String(n).trim().slice(0, 60); store(); },
     async changePassword(){ /* demo: nothing to change */ },
+    async options(){ need(); return clone(db.options || []).sort((a, b) => a.list.localeCompare(b.list) || a.value.localeCompare(b.value)); },
+    async addOption(list, value){ fresh();
+      if (!admin()) throw new Error('Only an admin can add list options.');
+      value = String(value); db.options = db.options || [];
+      if (!/^[A-Z]{2,20}$/.test(list) || list === 'QC') throw new Error('That list cannot be extended.');
+      if (value !== value.trim() || !value.length || value.length > 200) throw new Error('The option must be 1 to 200 characters without spaces at either end.');
+      if (db.options.some(o => o.list === list && o.value.toLowerCase() === value.toLowerCase())) throw new Error('duplicate key: that option is already in the list');
+      db.options.push({ list, value, created_by: uid, created_at: new Date().toISOString() }); store();
+    },
+    async removeOption(list, value){ fresh();
+      if (!admin()) throw new Error('Only an admin can remove list options.');
+      db.options = (db.options || []).filter(o => !(o.list === list && o.value === value)); store();
+    },
     async allData(){ need(); return Object.values(db.records).filter(r => !r.deleted_at).map(r => Object.assign(clone(r.data), { _uid: r.uid })); },
     resetDemo(){ sset(KEY, ''); sset(SKEY, ''); }
   };

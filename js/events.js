@@ -3,7 +3,7 @@ function onInput(e){
   const el=e.target;
   if (el.id==='listq'){ listQ=el.value; const pos=el.selectionStart; renderRecords(); const n=$('#listq'); n.focus(); try{n.setSelectionRange(pos,pos);}catch(_){} return; }
   const path=el.dataset.path; if (!path||!cur) return;
-  const f=fieldForPath(path); let v;
+  const f=fieldForPath(path); let v; const oldVal=getPath(cur,path);
   if (el.type==='checkbox') v = el.checked?'X':'';
   else if (f && f.t==='date' && el.dataset.dpart){
     const part=el.dataset.dpart, len=part==='y'?4:2;
@@ -15,26 +15,56 @@ function onInput(e){
   } else if (f && f.t==='url'){
     v=el.value.replace(/\s+/g,''); if (el.value!==v) el.value=v;
     const a=el.parentElement.querySelector('.srclink'); if (a){ const ok=/^https?:\/\//i.test(v); a.hidden=!ok; a.href=ok?v:'#'; }
-  } else if (f && f.t!=='area' && f.t!=='appref'){
+  } else if (f && f.t!=='area' && f.t!=='appref' && !f.nocase){
     const p=el.selectionStart; v=el.value.toUpperCase(); if (el.value!==v){ el.value=v; try{el.setSelectionRange(p,p);}catch(_){} }
   } else v=el.value;
   setPath(cur, path, v);
-  if (f && f.t==='code'){ const m=el.parentElement.querySelector('.meaning'); if (m) m.textContent = CODES[f.list][v]||''; }
-  if (f && f.cty && US_STATES.has(v)){ // a US state implies the country
-    const cp=path.split('.').slice(0,-1).concat(f.cty).join('.'); setPath(cur,cp,'US');
-    const ce=document.querySelector(`[data-path="${cp}"]`); if (ce) ce.value='US';
-  }
+  if (f && f.t==='url') autoLabel(path, oldVal, v);
+  if (f && (f.t==='url' || /(^|\.)(note|src_note)$/.test(path))){ clearTimeout(onInput.srcT); onInput.srcT=setTimeout(refreshSrcList,400); }
+  if (f && f.t==='code' && f.list==='QC'){ const m=el.parentElement.querySelector('.meaning'); if (m) m.textContent = CODES[f.list][v]||''; }
+  if (f && f.cty && US_STATES.has(v)) setCountry(path, f);
   markActive(); schedSave();
   if (path.startsWith('personal.names.0')||path.startsWith('meta.file.')) renderTop();
+}
+/* fill the page label from the Fold3 address when it carries a page number ("…-page-10-…" gives "p. 10");
+   leave a label the person typed alone, and leave it empty (for them to type) when the address has no page number */
+function autoLabel(path, oldV, newV){
+  const ks=path.split('.'); const last=ks.pop(); const rowPath=ks.join('.'); const row=getPath(cur,rowPath); if (!row) return;
+  const nk = last==='url' ? 'note' : last==='src' ? 'src_note' : null; if (!nk || !(nk in row)) return;
+  const have=String(row[nk]||'').trim();
+  if (have==='' || have===srcLabel(oldV||'')){
+    const lab=srcLabel(newV); if (lab!==have){ row[nk]=lab; const el=document.querySelector(`[data-path="${rowPath}.${nk}"]`); if (el) el.value=lab; }
+  }
+}
+/* a US state implies the country */
+function setCountry(path, f){
+  const cp=path.split('.').slice(0,-1).concat(f.cty).join('.'); setPath(cur,cp,COUNTRY_US);
+  const ce=document.querySelector(`[data-path="${cp}"]`); if (ce) ce.value=COUNTRY_US;
+}
+/* a source error inside a per-field panel: open that panel so the box exists to jump to */
+function openSrcPanelFor(path){
+  const m=/^(.*)\.srcs\.(\d+)\.url$/.exec(path); if (!m) return;
+  const row=getPath(cur,m[1]); const e=row && row.srcs && row.srcs[+m[2]]; if (e && e.field) fsrcSet(row,e.field,true);
+}
+/* after normalising at save time, show the list's spelling in the boxes too */
+function syncBoxes(){
+  document.querySelectorAll('input[data-path]:not([data-dpart]):not([type=checkbox])').forEach(el=>{
+    const v=getPath(cur, el.dataset.path); if (typeof v==='string' && v!==el.value) el.value=v;
+  });
+  if (cur.meta && cur.meta.file) renderTop();
 }
 function onBlur(e){
   const el=e.target; const path=el.dataset?.path; if (!path||!cur) return;
   const f=fieldForPath(path); if (!f) return;
+  if (f.t==='code' && f.list!=='QC' && el.tagName==='INPUT'){
+    const v=normCode(f, el.value);
+    if (v!==el.value){ el.value=v; setPath(cur, path, v); if (f.cty && US_STATES.has(v)) setCountry(path, f); markActive(); schedSave(); if (path.startsWith('meta.file.')) renderTop(); }
+  }
   const rowPath=path.split('.').slice(0,-1).join('.'); const row=getPath(cur,rowPath);
   const basePath = path.endsWith('_q') ? path.slice(0,-2) : path;
   const targets = [...document.querySelectorAll(`[data-path="${basePath}"]`)]; // a date has three boxes
   const ff = path.endsWith('_q') ? fieldForPath(basePath) : f;
-  if (targets.length && ff){ const res=checkField(ff, getPath(cur, basePath), row); for (const t of targets){ t.classList.toggle('bad', !!res && res.lvl==='err'); t.classList.toggle('warn', !!res && res.lvl==='warn'); } }
+  if (targets.length && ff){ const res=checkField(ff, getPath(cur, basePath), row); for (const t of targets){ t.classList.toggle('bad', !!res && res.lvl==='err'); t.classList.toggle('warn', !!res && res.lvl==='warn'); t.classList.toggle('custom', !!res && res.lvl==='note'); } }
   sideRefresh();
 }
 let ptrDown=false, sidePending=false;
@@ -69,7 +99,8 @@ async function saveNow(force){
   if (!cur || saving || curMeta.deleted) return;
   if (!dirty && !curMeta.isNew && !force){ toast('No changes to save'); return; }
   saving=true; renderSaveState();
-  const payload=JSON.parse(JSON.stringify(cur));
+  normalizeRecord(cur); syncBoxes();
+  const payload=prunedCopy(cur);
   try {
     const res = await API.save(cur._uid, payload, curMeta.isNew ? 0 : curMeta.version);
     if (res && res.ok){
@@ -126,9 +157,16 @@ document.addEventListener('click', async e=>{
   if (act==='add'){ const [sid,gid]=path.split('.'); const g=secById(sid).groups.find(x=>x.id===gid); cur[sid][gid].push(blankFields(g.fields)); schedSave(); renderMain(); const rows=document.querySelectorAll(`#g-${sid}-${gid} .row`); rows[rows.length-1]?.querySelector('input,textarea,select')?.focus(); }
   else if (act==='del'){ arm(b, path, 'Confirm', ()=>{ const ks=path.split('.'); const arr=cur[ks[0]][ks[1]]; arr.splice(+ks[2],1); if (!arr.length){ const g=secById(ks[0]).groups.find(x=>x.id===ks[1]); arr.push(blankFields(g.fields)); } schedSave(); renderMain(); renderNav(); refreshChecks(); }); }
   else if (act==='sort'){ const [sid,gid]=path.split('.'); const k=b.dataset.key; const arr=cur[sid][gid]; const blanks=arr.filter(isBlank); const filled=arr.filter(r=>!isBlank(r)).sort((a,b2)=>dateKey(a[k]).localeCompare(dateKey(b2[k]))); cur[sid][gid]=[...filled,...blanks]; schedSave(); renderMain(); toast('Sorted by date'); }
+  else if (act==='addsrc'){ const row=getPath(cur,path); row.srcs.push({field:b.dataset.field||'', url:'', note:''}); schedSave(); renderMain(); document.getElementById(idOf(`${path}.srcs.${row.srcs.length-1}.url`))?.focus(); }
+  else if (act==='delsrc'){ const ks=path.split('.'); const idx=+ks.pop(); getPath(cur,ks.join('.')).splice(idx,1); schedSave(); renderMain(); }
+  else if (act==='fsrc'){ const key=path+'|'+b.dataset.fkey, row=getPath(cur,path);
+    if (fsrcIsOpen(row,b.dataset.fkey)) fsrcSet(row,b.dataset.fkey,false);
+    else { fsrcSet(row,b.dataset.fkey,true); if (!row.srcs.some(x=>x.field===b.dataset.fkey)){ row.srcs.push({field:b.dataset.fkey, url:'', note:''}); schedSave(); } }
+    renderMain();
+    if (fsrcIsOpen(row,b.dataset.fkey)){ const mine=row.srcs.map((x,i)=>[x,i]).filter(([x])=>x.field===b.dataset.fkey); const pick=mine.find(([x])=>isBlank(x.url))||mine[0]; if (pick) document.getElementById(idOf(`${path}.srcs.${pick[1]}.url`))?.focus(); } }
   else if (act==='addsub'){ const arr=getPath(cur,path); const sub=SCHEMA.find(s=>s.id==='apps').groups[0].fields.find(x=>x.t==='sub'); arr.push(blankFields(sub.fields)); schedSave(); renderMain(); }
   else if (act==='delsub'){ const ks=path.split('.'); const idx=+ks.pop(); const arr=getPath(cur,ks.join('.')); arr.splice(idx,1); if (!arr.length){ const sub=SCHEMA.find(s=>s.id==='apps').groups[0].fields.find(x=>x.t==='sub'); arr.push(blankFields(sub.fields)); } schedSave(); renderMain(); }
-  else if (act==='goto'){ goSec(b.dataset.secid); setTimeout(()=>{ const el=document.getElementById('f-'+path.replace(/\./g,'-')); if (el){ el.scrollIntoView({block:'center'}); el.focus(); } }, 30); }
+  else if (act==='goto'){ openSrcPanelFor(path); goSec(b.dataset.secid); setTimeout(()=>{ const el=document.getElementById('f-'+path.replace(/\./g,'-')); if (el){ el.scrollIntoView({block:'center'}); el.focus(); } }, 30); }
   else if (act==='save'){ saveNow(); }
   else if (act==='open'){ openRec(b.dataset.uid); }
   else if (act==='openhist'){ openRec(b.dataset.uid, 'history'); }
@@ -145,6 +183,9 @@ document.addEventListener('click', async e=>{
   else if (act==='cf-copy'){ const t=JSON.stringify(pendingMine); navigator.clipboard?.writeText(t).then(()=>toast('Your version is on the clipboard'),()=>toast('Copy failed; use Export instead')); }
   else if (act==='import'){ $('#impfile').click(); }
   else if (act==='expall'){ exportMenu(true); }
+  else if (act==='customvals'){ showCustomValues(); }
+  else if (act==='promote'){ try { await API.addOption(b.dataset.list, b.dataset.value); applyOptions(await API.options()); toast('Added to the list'); } catch(err){ toast(errMsg(err,'Could not add it.')); } showCustomValues(); }
+  else if (act==='rmopt'){ arm(b, 'opt'+b.dataset.list+b.dataset.value, 'Confirm remove', async ()=>{ try { await API.removeOption(b.dataset.list, b.dataset.value); applyOptions(await API.options()); toast('Removed from the list'); } catch(err){ toast(errMsg(err,'Could not remove it.')); } showCustomValues(); }); }
   else if (act==='close'){ $('#modal').hidden=true; }
   else if (act==='copy'){ const ta=$('#modal textarea'); navigator.clipboard?.writeText(ta.value).then(()=>toast('Copied'),()=>{ ta.select(); toast('Press Ctrl+C to copy'); }); }
   else if (act==='dl'){ doExport(b.dataset.kind, b.dataset.scope==='all'); }
@@ -184,7 +225,7 @@ function importFile(file){
       if (!r || !r.meta || !r.personal){ failed++; continue; }
       const uid = (r._uid && /^r[a-z0-9]{4,40}$/.test(r._uid)) ? r._uid : newUid();
       if (have.has(uid)){ skipped++; continue; }
-      const data=upgrade(r); data._uid=uid; delete data._modified; delete data._example;
+      const data=normalizeRecord(upgrade(prunedCopy(r))); data._uid=uid; delete data._modified; delete data._example;
       try { const res=await API.save(uid, data, 0); if (res.ok) made++; else skipped++; } catch(err){ failed++; }
     }
     await refreshList(); renderRecords();
@@ -211,6 +252,7 @@ async function afterSignIn(){
   view='records'; cur=null; curMeta=null;
   if (!ME.active){ renderAll(); return; }
   await refreshList();
+  try { applyOptions(await API.options()); } catch(e){ /* the form still works with the built-in lists */ }
   const last=sget(`spe.cur.${ME.id}`);
   if (last && LIST.some(r=>r.uid===last)) { await openRec(last, sget('spe.sec')||'meta'); return; }
   renderAll();

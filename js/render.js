@@ -26,7 +26,8 @@ function checkField(f, v, row){
   }
   if (v==null || String(v).trim()==='') return (f.req ? {lvl:'err', msg:f.l+' is required.'} : null);
   if (f.t==='appref' && !appRefs().includes(v)) return {lvl:'warn', msg:`"${v}" is not listed in File & tracking any more. Pick a file from the list, or add it there.`};
-  if (f.t==='code' && !(v in CODES[f.list])) return {lvl:'warn', msg:`"${v}" is not a listed code. Keep it only if you mean to override.`};
+  if (f.t==='code' && f.list==='QC' && !(v in CODES.QC)) return {lvl:'warn', msg:`"${v}" is not a listed quality code.`};
+  if (f.t==='code' && f.list!=='QC' && !(String(v).trim() in CODES[f.list])) return {lvl:'note', msg:`"${v}" is not in the list, so it is saved as typed. Use this for a value the list lacks; the PIs can add common ones to the list.`};
   if (f.t==='num'){ const n=Number(v); if (isNaN(n)) return {lvl:'err', msg:'Numbers only.'}; if (n<f.min||n>f.max) return {lvl:'warn', msg:`Expected ${f.min}–${f.max}.`}; if (!f.dec && !Number.isInteger(n)) return {lvl:'warn', msg:'Whole number expected.'}; }
   if (f.nameRule && !v.includes(',')) return {lvl:'warn', msg:'Name rule: LAST NAME, FIRST NAME M (e.g. JOHNSON, HENRY). Last name only → JOHNSON,'};
   return null;
@@ -35,7 +36,7 @@ function allChecks(r){
   const out=[];
   const walk=(fields,obj,base,sec,gtitle)=>{ for (const f of fields){ if (f.t==='br' || f.hide) continue;
       if (f.t==='sub'){ (obj[f.k]||[]).forEach((sr,j)=>walk(f.fields,sr,`${base}.${f.k}.${j}`,sec,gtitle)); continue; }
-      const res=checkField(f,obj[f.k],obj); if (res) out.push({...res, path:`${base}.${f.k}`, sec, where:`${gtitle} · ${f.l}`}); } };
+      const res=checkField(f,obj[f.k],obj); if (res && res.lvl!=='note') out.push({...res, path:`${base}.${f.k}`, sec, where:`${gtitle} · ${f.l}`}); } };
   for (const s of visSections()) for (const g of visGroups(s)){
     const v=r[s.id][g.id];
     if (g.repeat) v.forEach((row,i)=>{ if (!rowBlank(g,row)) walk(g.fields,row,`${s.id}.${g.id}.${i}`,s.id,`${g.title} ${i+1}`); });
@@ -62,18 +63,70 @@ function appRefs(){
   const out=[];
   for (const r of ((cur && cur.meta && cur.meta.appfiles) || [])){
     const n=String(r.number||'').trim(); if (!n) continue;
-    const lab=`${CODES.APPCERT[r.kind]||'File number'} ${n}`;
+    const lab=`${r.kind||'File number'} ${n}`;
     if (!out.includes(lab)) out.push(lab);
   }
   return out;
 }
+/* ---------- sources: page labels, the drop-down of sources used in this record, per-field source panels ---------- */
+/* which per-field source panels are open: kept against the row object itself, so the state follows the row when rows
+   are sorted, and disappears with it when the row is deleted or the record is reloaded */
+const openFsrc = new WeakMap();
+const fsrcIsOpen = (row,k) => !!(row && openFsrc.has(row) && openFsrc.get(row).has(k));
+function fsrcSet(row,k,on){ if (!row) return; let s=openFsrc.get(row); if (!s){ s=new Set(); openFsrc.set(row,s); } if (on) s.add(k); else s.delete(k); }
+const SRC_ICON='<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9.5l3-3M7 4.5l1-1a2.5 2.5 0 013.5 3.5l-1 1M9 11.5l-1 1A2.5 2.5 0 014.5 9l1-1"/></svg>';
+const FSRC_TYPES=new Set(['text','name','code','date','num','area']);
+/* "p. 10" from a Fold3 address that carries a page number in its slug (…/image/259904703/byard-henry-page-10-us-civil-war-…); '' if there is none, so the person types one */
+function srcLabel(u){ try { const m=new URL(String(u).trim()).pathname.match(/(?:^|[-\/])page-(\d+)(?=$|[-\/])/i); return m ? 'p. '+m[1] : ''; } catch(e){ return ''; } }
+function srcShort(u){ const m=String(u).match(/fold3\.com\/(?:image|file|record|title)\/(\d{5,})/i); return m ? 'Fold3 '+m[1] : ''; }
+function canFsrc(f,row){ return !!(row && Array.isArray(row.srcs)) && FSRC_TYPES.has(f.t) && f.list!=='QC' && f.k!=='src' && f.k!=='src_note' && f.k!=='field'; }
+/* every source URL used anywhere in the open record, with its label and where it was first used */
+function recordSources(){
+  const out=new Map(); if (!cur) return [];
+  const add=(url,note,where)=>{ url=String(url||'').trim(); if (!/^https?:\/\//i.test(url)) return; const e=out.get(url); if (!e) out.set(url,{url,note:(note||'').trim(),where}); else if (!e.note && note) e.note=String(note).trim(); };
+  for (const s of visSections()) for (const g of visGroups(s)){
+    (g.repeat ? cur[s.id][g.id] : [cur[s.id][g.id]]).forEach((row,i)=>{ const where=`${s.title} › ${g.title}${g.repeat?' '+(i+1):''}`;
+      add(row.src,row.src_note,where); add(row.url,'',where); add(row.contraband_src,'',where);
+      for (const e of (row.srcs||[])) add(e.url,e.note,where); }); }
+  return [...out.values()];
+}
+function refreshSrcList(){
+  const dl=document.getElementById('dl-SRCS'); if (!dl) return;
+  dl.innerHTML=recordSources().map(x=>`<option value="${esc(x.url)}" label="${esc((x.note||srcLabel(x.url)||srcShort(x.url)||'Source')+' · '+x.where)}"></option>`).join('');
+}
+const idOf = path => 'f-'+path.replace(/\./g,'-');
+function srcEntryHTML(p,e){
+  const ck=checkField({t:'url'},e.url); const cls=ck?(ck.lvl==='err'?' bad':' warn'):''; const ok=/^https?:\/\//i.test(e.url||'');
+  return `<div class="urlrow srcent"><input class="in mono${cls}" data-path="${p}.url" id="${idOf(p+'.url')}" list="dl-SRCS" value="${esc(e.url)}" autocomplete="off" spellcheck="false" placeholder="https://www.fold3.com/…" aria-label="Source URL"><input class="in lbl" data-path="${p}.note" id="${idOf(p+'.note')}" value="${esc(e.note)}" maxlength="40" autocomplete="off" placeholder="page / label" aria-label="Page or label"><a class="srclink" href="${ok?esc(e.url):'#'}" target="_blank" rel="noopener noreferrer"${ok?'':' hidden'}>Open ↗</a><button type="button" class="linkbtn" data-act="delsrc" data-path="${p}" aria-label="Remove this source" title="Remove this source">×</button></div>`;
+}
+/* the main source box of a block (src + its page label), the further sources that apply to the whole entry, and the add button */
+function sourcesHTML(obj, base){
+  const ck=checkField({t:'url'},obj.src); const cls=ck?(ck.lvl==='err'?' bad':' warn'):''; const ok=/^https?:\/\//i.test(obj.src||'');
+  let h=`<div class="f wide srcblock"><label for="${idOf(base+'.src')}" title="Source (Fold3 page URL)">Source (Fold3 page URL)</label><div class="urlrow"><input class="in mono${cls}" data-path="${base}.src" id="${idOf(base+'.src')}" list="dl-SRCS" value="${esc(obj.src)}" autocomplete="off" spellcheck="false" placeholder="https://www.fold3.com/…"><input class="in lbl" data-path="${base}.src_note" id="${idOf(base+'.src_note')}" value="${esc(obj.src_note)}" maxlength="40" autocomplete="off" placeholder="page / label" aria-label="Page or label for the main source"><a class="srclink" href="${ok?esc(obj.src):'#'}" target="_blank" rel="noopener noreferrer"${ok?'':' hidden'}>Open ↗</a></div>`;
+  (obj.srcs||[]).forEach((e,i)=>{ if (e.field==='') h+=srcEntryHTML(`${base}.srcs.${i}`,e); });
+  return h+`<div><button type="button" class="linkbtn" data-act="addsrc" data-path="${base}" data-field="">+ Add another source</button></div></div>`;
+}
+function fsrcPanelHTML(base,f,row){
+  let h=`<div class="fsrc" data-for="${base}|${f.k}"><div class="slab">Source for ${esc(f.l)}</div>`;
+  row.srcs.forEach((e,i)=>{ if (e.field===f.k) h+=srcEntryHTML(`${base}.srcs.${i}`,e); });
+  return h+`<button type="button" class="linkbtn" data-act="addsrc" data-path="${base}" data-field="${f.k}">+ Add another source for ${esc(f.l)}</button></div>`;
+}
 function fieldHTML(f, val, path, row){
+  const h=fieldHTML0(f,val,path,row); if (f.t==='br') return h;
+  const base=path.slice(0,path.lastIndexOf('.'));
+  return canFsrc(f,row) && fsrcIsOpen(row,f.k) ? h+fsrcPanelHTML(base,f,row) : h;
+}
+function fieldHTML0(f, val, path, row){
   if (f.t==='br') return '<span class="fbreak"></span>';
   const id='f-'+path.replace(/\./g,'-');
   const w=`style="--w:${f.t==='date'?10:Math.min(f.w||12,48)}"`;
-  const chk=checkField(f,val,row); const cls=chk?(chk.lvl==='err'?' bad':' warn'):'';
+  const chk=checkField(f,val,row); const cls=chk?(chk.lvl==='err'?' bad':chk.lvl==='note'?' custom':' warn'):'';
   const da=`data-path="${path}" id="${id}"`;
-  const lab=`<label for="${id}" title="${esc(f.l)}">${esc(f.l)}</label>`;
+  let lab=`<label for="${id}" title="${esc(f.l)}">${esc(f.l)}</label>`;
+  if (canFsrc(f,row)){
+    const base=path.slice(0,path.lastIndexOf('.')); const n=row.srcs.filter(e=>e.field===f.k && !isBlank(e.url)).length;
+    lab=`<div class="lr">${lab}<button type="button" class="srcbtn${n?' has':''}" data-act="fsrc" data-path="${base}" data-fkey="${f.k}" title="${n?n+' source'+(n>1?'s':'')+' for this field. Click to show.':'Add a source for this field'}" aria-label="Source for ${esc(f.l)}" aria-expanded="${openFsrc.has(base+'|'+f.k)}">${SRC_ICON}${n?`<b>${n}</b>`:''}</button></div>`;
+  }
   if (f.t==='area') return `<div class="f wide">${lab}<textarea class="in${cls}" ${da} rows="3">${esc(val)}</textarea></div>`;
   if (f.t==='x') return `<div class="f"><span class="lab">${esc(f.l)}</span><span class="xbox"><input type="checkbox" ${da} ${val==='X'?'checked':''} aria-label="${esc(f.l)}"></span></div>`;
   if (f.t==='date'){
@@ -84,7 +137,7 @@ function fieldHTML(f, val, path, row){
   }
   if (f.t==='url'){
     const ok=/^https?:\/\//i.test(val||'');
-    return `<div class="f wide">${lab}<div class="urlrow"><input class="in mono${cls}" ${da} value="${esc(val)}" autocomplete="off" spellcheck="false" placeholder="https://www.fold3.com/…"><a class="srclink" href="${ok?esc(val):'#'}" target="_blank" rel="noopener noreferrer"${ok?'':' hidden'}>Open ↗</a></div></div>`;
+    return `<div class="f wide">${lab}<div class="urlrow"><input class="in mono${cls}" ${da} list="dl-SRCS" value="${esc(val)}" autocomplete="off" spellcheck="false" placeholder="https://www.fold3.com/…"><a class="srclink" href="${ok?esc(val):'#'}" target="_blank" rel="noopener noreferrer"${ok?'':' hidden'}>Open ↗</a></div></div>`;
   }
   if (f.t==='appref'){
     const L=appRefs(); const odd = val && !L.includes(val) ? `<option value="${esc(val)}" selected>${esc(val)} (not in list)</option>` : '';
@@ -95,17 +148,23 @@ function fieldHTML(f, val, path, row){
     const L=CODES[f.list]; const odd = val && !(val in L) ? `<option value="${esc(val)}" selected>${esc(val)} (not in list)</option>` : '';
     return `<div class="f">${lab}<select class="in${cls}" ${da} style="--w:${Math.max(...Object.values(L).map(x=>x.length))}"><option value=""></option>${Object.entries(L).map(([k,m])=>`<option value="${esc(k)}"${k===val?' selected':''}>${esc(m)}</option>`).join('')}${odd}</select></div>`;
   }
+  if (f.t==='code' && f.list!=='QC'){ // full-text value: pick from the list or type something else
+    return `<div class="f">${lab}<input class="in txtplain${cls}" ${da} style="--w:${f.w+3}" value="${esc(val)}" list="dl-${f.list}" autocomplete="off" title="Choose from the list or type another value"></div>`;
+  }
   if (f.t==='code'){
     const m = val && CODES[f.list][val] ? CODES[f.list][val] : '';
     return `<div class="f">${lab}<input class="in mono${cls}" ${da} style="--w:${Math.max(f.w,2)+3}" value="${esc(val)}" maxlength="${f.w}" list="dl-${f.list}" autocomplete="off"><span class="meaning">${esc(m)}</span></div>`;
   }
-  const mono = f.t==='num' ? ' mono' : ' txt';
+  const mono = f.t==='num' ? ' mono' : f.nocase ? ' txtplain' : ' txt';
   const list = f.list ? ` list="dl-${f.list}"` : '';
   return `<div class="f">${lab}<input class="in${mono}${cls}" ${da} ${w} value="${esc(val)}" autocomplete="off"${list}${f.t==='num'?' inputmode="decimal"':''}></div>`;
 }
 function fieldsHTML(fields, obj, base){
   let h='';
   for (const f of visFields(fields)){
+    if (f.t==='sub' && f.k==='srcs') continue;          // drawn with the main source box and the per-field icons
+    if (f.k==='src_note' && Array.isArray(obj.srcs)) continue;
+    if (f.k==='src' && Array.isArray(obj.srcs)){ h+=sourcesHTML(obj, base); continue; }
     if (f.t==='sub'){
       const rows=obj[f.k]||[];
       h+=`<div class="sub"><div class="slab">${esc(f.l)} <button type="button" class="linkbtn" data-act="addsub" data-path="${base}.${f.k}">+ Add claim</button></div>`;
@@ -142,9 +201,10 @@ function renderGuide(f, path){
     if (f.t==='date') h+=`<p><b>Year, month, day</b> go in separate boxes. If the file gives only the year, or the year and month, leave the other boxes empty (1865 → --/--/1865; April 1865 → 04/--/1865). Type <kbd>-</kbd> for a single digit you can't read. An incomplete date needs a quality code.</p>`;
     if (f.t==='url') h+=`<p>Paste the page address from the Fold3 browser bar. <b>Open ↗</b> beside the box opens it.</p>`;
     if (f.t==='appref' && !appRefs().length) h+=`<p><b>No application or certificate numbers are entered yet.</b> Add them in 0. File &amp; tracking and they will appear in this list.</p>`;
-    if (f.cty) h+=`<p>Choosing a US state fills Country with US.</p>`;
+    if (f.cty) h+=`<p>Choosing a US state fills Country with United States.</p>`;
     if (help) h+=`<p>${esc(help)}</p>`;
-    if (f.t==='code'){ const L=CODES[f.list]; h+=`<div class="ctabwrap"><table class="ctab">${Object.entries(L).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table></div>`; }
+    if (f.t==='code' && f.list==='QC'){ const L=CODES[f.list]; h+=`<div class="ctabwrap"><table class="ctab">${Object.entries(L).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table></div>`; }
+    else if (f.t==='code'){ h+=`<p>Choose from the list or type another value (it is saved as typed). Typing an old short code, such as <b>M</b>, turns into the full text when you leave the box.</p><div class="ctabwrap"><table class="ctab">${Object.values(CODES[f.list]).map(v=>`<tr><td class="full">${esc(v)}</td></tr>`).join('')}</table></div>`; }
     if (f.t==='date' && f.q) h+=`<div class="src">Quality codes: ${Object.entries(CODES.QC).map(([k,v])=>`<b>${k}</b> ${esc(v)}`).join(' · ')}</div>`;
     h+='</div>';
   } else {
@@ -159,10 +219,21 @@ function renderGuide(f, path){
 }
 
 /* datalists for codes and ratings */
+/* options an admin promoted from typed values (table list_options) join the built-in lists; run again after a change */
+const addedOptions=[];
+function applyOptions(rows){
+  for (const o of addedOptions) delete CODES[o.list][o.value];
+  addedOptions.length=0;
+  for (const o of rows||[]){ const L=CODES[o.list]; if (!L || o.list==='QC' || (o.value in L)) continue; L[o.value]=o.value; addedOptions.push({list:o.list,value:o.value}); }
+  buildDatalists();
+}
 function buildDatalists(){
-  let h=''; for (const [k,L] of Object.entries(CODES)) h+=`<datalist id="dl-${k}">${Object.entries(L).map(([c,m])=>`<option value="${esc(c)}" label="${esc(m)}"></option>`).join('')}</datalist>`;
+  let h=''; for (const [k,L] of Object.entries(CODES)) h+=`<datalist id="dl-${k}">${Object.entries(L).map(([c,m])=>k==='QC'?`<option value="${esc(c)}" label="${esc(m)}"></option>`:`<option value="${esc(c)}"></option>`).join('')}</datalist>`;
+  h+='<datalist id="dl-SRCS"></datalist>';
   h+=`<datalist id="dl-RATINGS">${RATINGS.map(r=>`<option value="${esc(r)}"></option>`).join('')}</datalist>`;
-  const d=document.createElement('div'); d.hidden=true; d.innerHTML=h; document.body.appendChild(d);
+  const old=document.getElementById('dlbox'); if (old) old.remove();
+  const d=document.createElement('div'); d.id='dlbox'; d.hidden=true; d.innerHTML=h; document.body.appendChild(d);
+  if (cur && typeof refreshSrcList==='function') refreshSrcList();
 }
 
 /* ---------- field lookup by path ---------- */

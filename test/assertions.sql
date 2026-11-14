@@ -110,4 +110,34 @@ reset role;
 set role authenticated; select set_config('request.jwt.claim.sub', :'stranger', false);
 select testkit.ok(testkit.visible('select 1 from records') = 0 and testkit.visible('select 1 from record_versions') = 0, 'an account nobody activated sees nothing');
 reset role;
+-- extra sources in a one-off block and in a repeat block show up as subgroup / subrow
+set role authenticated; select set_config('request.jwt.claim.sub', :'admin', false);
+select save_record('rtest002', '{"_uid":"rtest002","meta":{"file":{"sailor_id":"S-2"}},"personal":{"death":{"srcs":[{"field":"date","url":"https://x/1","note":"p. 1"},{"field":"","url":"https://x/2","note":""}]},"names":[{"name":"A","srcs":[{"field":"","url":"https://x/3","note":""}]}]}}', 0);
+select testkit.ok((select count(*) from record_fields where record_uid = 'rtest002' and "group" = 'death' and subgroup = 'srcs' and field = 'url' and subrow in (1,2)) = 2, 'record_fields numbers extra sources in one-off blocks');
+select testkit.ok(exists (select 1 from record_fields where record_uid = 'rtest002' and "group" = 'names' and "row" = 1 and subgroup = 'srcs' and subrow = 1 and field = 'url'), 'record_fields numbers extra sources in repeat blocks');
+reset role;
+-- list options: admins promote typed values into the form's lists; everyone active reads them
+set role authenticated; select set_config('request.jwt.claim.sub', :'ra2', false);
+select testkit.fails($q$insert into list_options (list, value) values ('MF', 'Unknown')$q$, 'row-level security|permission denied', 'an RA cannot add a list option');
+select testkit.ok(testkit.visible('select 1 from list_options') = 0, 'there are no list options yet');
+reset role;
+set role authenticated; select set_config('request.jwt.claim.sub', :'admin', false);
+insert into list_options (list, value, created_by) values ('MF', 'Unknown', :'ra2');
+select testkit.ok((select created_by = :'admin'::uuid and created_at is not null from list_options where list = 'MF'), 'who added an option comes from the login, not the browser');
+select testkit.fails($q$insert into list_options (list, value) values ('MF', 'UNKNOWN')$q$, 'duplicate key', 'the same option cannot be added twice, whatever the capitals');
+select testkit.fails($q$insert into list_options (list, value) values ('QC', 'Z')$q$, 'check constraint', 'quality codes cannot be extended');
+select testkit.fails($q$insert into list_options (list, value) values ('MF', ' padded ')$q$, 'check constraint', 'options are stored trimmed');
+reset role;
+set role authenticated; select set_config('request.jwt.claim.sub', :'ra2', false);
+select testkit.ok(testkit.visible('select 1 from list_options') = 1, 'an RA can read the list options');
+select testkit.try($q$delete from list_options$q$);
+select testkit.ok(testkit.visible('select 1 from list_options') = 1, 'an RA cannot remove a list option');
+reset role;
+set role anon;
+select testkit.ok(testkit.visible('select 1 from list_options') = 0, 'a signed-out visitor sees no list options');
+reset role;
+set role authenticated; select set_config('request.jwt.claim.sub', :'admin', false);
+delete from list_options where list = 'MF' and value = 'Unknown';
+select testkit.ok(testkit.visible('select 1 from list_options') = 0, 'an admin can remove a list option');
+reset role;
 \echo ALL DATABASE ASSERTIONS PASSED

@@ -25,9 +25,9 @@ function exportMenu(all){
 }
 async function doExport(kind, all){
   let recs;
-  try { recs = all ? (await API.allData()).map(upgrade) : [cur]; } catch(e){ return toast(errMsg(e,'Could not fetch the records.')); }
+  try { recs = (all ? (await API.allData()).map(upgrade) : [cur]).map(outgoing); } catch(e){ return toast(errMsg(e,'Could not fetch the records.')); }
   const name = (all ? `pension_records_${stamp()}` : `${fileBase(cur)}_${stamp()}`) + '.' + kind;
-  const text = kind==='json' ? JSON.stringify(all?recs:cur, null, 1) : toCSV(recs);
+  const text = kind==='json' ? JSON.stringify(all?recs:recs[0], null, 1) : toCSV(recs);
   let ok=false;
   try { const blob=new Blob([text],{type:kind==='json'?'application/json':'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); ok = (window.self===window.top); } catch(e){ ok=false; }
   if (!ok){ $('#expout').innerHTML=`<p class="intro" style="margin:12px 0 6px">If no download started (some embedded previews block downloads), copy the text below and save it as <code>${esc(name)}</code>.</p><div class="tools" style="margin-bottom:6px"><button class="btn" data-act="copy" type="button">Copy</button></div><textarea readonly>${esc(text)}</textarea>`; }
@@ -46,6 +46,7 @@ function exampleRecord(){
   P.heights=[{feet:'5',inches:'6.5',hq:'',date:'08/14/1863',date_q:''}];
   Object.assign(P.death,{source:'C',date:'03/02/1902',date_q:'',city:'NORFOLK',county:'NORFOLK',state:'VA',place_q:'',cause:'PNEUMONIA',cause_beg:'02/20/1902',cause_beg_q:'',addr:'12 BAY STREET',country:'US',src:'https://www.fold3.com/example/0051'});
   P.rmk.remarks='NAME: SIGNS AS JAMES H EXAMPLE AFTER 1880';
+  Object.assign(P.death,{src_note:'p. 51',srcs:[{field:'cause',url:'https://www.fold3.com/image/1/example-page-52-pension',note:'p. 52'},{field:'',url:'https://www.fold3.com/example/0052',note:''}]});
   const G=(sid,gid)=>blankFields(SCHEMA.find(s=>s.id===sid).groups.find(g=>g.id===gid).fields);
   r.family.spouses=[{...G('family','spouses'), name:'EXAMPLE, MARY (NEE SAMPLE)', m_date:'12/--/1866', m_date_q:'1', m_place:'BRIDES HOME', m_city:'NORFOLK', m_state:'VA', m_country:'US', src:'https://www.fold3.com/example/0012'}];
   r.family.children=[{...G('family','children'), name:'WILLIAM', sex:'M', ld:'L', ld_date:'06/01/1898', b_date:'05/--/1868', b_date_q:'1', b_state:'VA', b_country:'US'},{...G('family','children'), name:'(DEAD CHILD)', ld:'D', ld_date:'06/01/1898'}];
@@ -63,5 +64,5 @@ function exampleRecord(){
   r.deps.depo=[{...G('deps','depo'), name:'SAMPLE, THOMAS', rank:'LANDSMAN', dep:'M', file:'Application number 000001', signs:'M', date:'09/12/1890', t1:'H', period:'W', info_date:'--/--/1864', info_date_q:'6', desc:'WAS SHIPMATE ON THE MINNESOTA AND SAW HIM TAKEN SICK WITH RHEUMATISM', src:'https://www.fold3.com/example/0022'},
                {...G('deps','depo'), name:'EXAMPLE, MARY', rank:'', dep:'F', file:'Certificate number 000002', signs:'S', date:'05/10/1902', t1:'E', period:'A', desc:'HUSBAND OWNED A HOUSE AND LOT AT NORFOLK', src:'https://www.fold3.com/example/0056'}];
   Object.assign(r.personal.enslaved,{former:'Y',freed:'--/--/1862',freed_q:'1',at_enl:'F',how:'ESCAPED TO UNION LINES'});
-  return r;
+  return upgrade(r); // writes the short codes above as full text
 }
