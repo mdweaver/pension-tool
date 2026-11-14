@@ -41,20 +41,24 @@ function setCountry(path, f){
   const cp=path.split('.').slice(0,-1).concat(f.cty).join('.'); setPath(cur,cp,COUNTRY_US);
   const ce=document.querySelector(`[data-path="${cp}"]`); if (ce) ce.value=COUNTRY_US;
 }
-/* leaving a full-text box: match what was typed to a listed value ignoring case, and read an old short code
-   ("M", "VA") as its description, so the saved value is always the list's own spelling */
-function normCode(f, v){
-  const t=v.trim(); if (!t) return v;
-  const L=CODES[f.list]; if (t in L) return t;
-  const hit=Object.keys(L).find(k=>k.toLowerCase()===t.toLowerCase()); if (hit) return hit;
-  const old=Object.keys(LEGACY[f.list]).find(k=>k.toLowerCase()===t.toLowerCase()); return old ? LEGACY[f.list][old] : v;
+/* a source error inside a per-field panel: open that panel so the box exists to jump to */
+function openSrcPanelFor(path){
+  const m=/^(.*)\.srcs\.(\d+)\.url$/.exec(path); if (!m) return;
+  const row=getPath(cur,m[1]); const e=row && row.srcs && row.srcs[+m[2]]; if (e && e.field) fsrcSet(row,e.field,true);
+}
+/* after normalising at save time, show the list's spelling in the boxes too */
+function syncBoxes(){
+  document.querySelectorAll('input[data-path]:not([data-dpart]):not([type=checkbox])').forEach(el=>{
+    const v=getPath(cur, el.dataset.path); if (typeof v==='string' && v!==el.value) el.value=v;
+  });
+  if (cur.meta && cur.meta.file) renderTop();
 }
 function onBlur(e){
   const el=e.target; const path=el.dataset?.path; if (!path||!cur) return;
   const f=fieldForPath(path); if (!f) return;
   if (f.t==='code' && f.list!=='QC' && el.tagName==='INPUT'){
     const v=normCode(f, el.value);
-    if (v!==el.value){ el.value=v; setPath(cur, path, v); if (f.cty && US_STATES.has(v)) setCountry(path, f); markActive(); schedSave(); }
+    if (v!==el.value){ el.value=v; setPath(cur, path, v); if (f.cty && US_STATES.has(v)) setCountry(path, f); markActive(); schedSave(); if (path.startsWith('meta.file.')) renderTop(); }
   }
   const rowPath=path.split('.').slice(0,-1).join('.'); const row=getPath(cur,rowPath);
   const basePath = path.endsWith('_q') ? path.slice(0,-2) : path;
@@ -95,6 +99,7 @@ async function saveNow(force){
   if (!cur || saving || curMeta.deleted) return;
   if (!dirty && !curMeta.isNew && !force){ toast('No changes to save'); return; }
   saving=true; renderSaveState();
+  normalizeRecord(cur); syncBoxes();
   const payload=prunedCopy(cur);
   try {
     const res = await API.save(cur._uid, payload, curMeta.isNew ? 0 : curMeta.version);
@@ -119,7 +124,7 @@ async function openRec(uid, toSec){
     const r = await API.get(uid);
     cur = upgrade(r.data); cur._uid = uid;
     curMeta = {version:r.version, isNew:false, created_by_name:r.created_by_name, created_at:r.created_at, updated_by_name:r.updated_by_name, updated_at:r.updated_at, deleted:!!r.deleted_at};
-    dirty=false; staleDraft=null; openFsrc.clear();
+    dirty=false; staleDraft=null;
     const d=loadDraft(uid);
     if (d && d.data){
       if (d.base===r.version){ cur=upgrade(d.data); cur._uid=uid; dirty=true; toast('Brought back your unsaved changes from '+fmtTime(d.at)); }
@@ -137,7 +142,7 @@ function openDraft(uid){
 }
 async function startNew(){
   if (cur && dirty){ await saveNow(); if (dirty) return; }
-  cur=newRecord(); curMeta={version:0, isNew:true}; dirty=false; staleDraft=null; openFsrc.clear();
+  cur=newRecord(); curMeta={version:0, isNew:true}; dirty=false; staleDraft=null;
   view='edit'; curSec='meta'; renderAll(); setTimeout(()=>document.getElementById('f-meta-file-sailor_id')?.focus(),20);
 }
 
@@ -155,13 +160,13 @@ document.addEventListener('click', async e=>{
   else if (act==='addsrc'){ const row=getPath(cur,path); row.srcs.push({field:b.dataset.field||'', url:'', note:''}); schedSave(); renderMain(); document.getElementById(idOf(`${path}.srcs.${row.srcs.length-1}.url`))?.focus(); }
   else if (act==='delsrc'){ const ks=path.split('.'); const idx=+ks.pop(); getPath(cur,ks.join('.')).splice(idx,1); schedSave(); renderMain(); }
   else if (act==='fsrc'){ const key=path+'|'+b.dataset.fkey, row=getPath(cur,path);
-    if (openFsrc.has(key)) openFsrc.delete(key);
-    else { openFsrc.add(key); if (!row.srcs.some(x=>x.field===b.dataset.fkey)){ row.srcs.push({field:b.dataset.fkey, url:'', note:''}); schedSave(); } }
+    if (fsrcIsOpen(row,b.dataset.fkey)) fsrcSet(row,b.dataset.fkey,false);
+    else { fsrcSet(row,b.dataset.fkey,true); if (!row.srcs.some(x=>x.field===b.dataset.fkey)){ row.srcs.push({field:b.dataset.fkey, url:'', note:''}); schedSave(); } }
     renderMain();
-    if (openFsrc.has(key)){ const mine=row.srcs.map((x,i)=>[x,i]).filter(([x])=>x.field===b.dataset.fkey); const pick=mine.find(([x])=>isBlank(x.url))||mine[0]; if (pick) document.getElementById(idOf(`${path}.srcs.${pick[1]}.url`))?.focus(); } }
+    if (fsrcIsOpen(row,b.dataset.fkey)){ const mine=row.srcs.map((x,i)=>[x,i]).filter(([x])=>x.field===b.dataset.fkey); const pick=mine.find(([x])=>isBlank(x.url))||mine[0]; if (pick) document.getElementById(idOf(`${path}.srcs.${pick[1]}.url`))?.focus(); } }
   else if (act==='addsub'){ const arr=getPath(cur,path); const sub=SCHEMA.find(s=>s.id==='apps').groups[0].fields.find(x=>x.t==='sub'); arr.push(blankFields(sub.fields)); schedSave(); renderMain(); }
   else if (act==='delsub'){ const ks=path.split('.'); const idx=+ks.pop(); const arr=getPath(cur,ks.join('.')); arr.splice(idx,1); if (!arr.length){ const sub=SCHEMA.find(s=>s.id==='apps').groups[0].fields.find(x=>x.t==='sub'); arr.push(blankFields(sub.fields)); } schedSave(); renderMain(); }
-  else if (act==='goto'){ goSec(b.dataset.secid); setTimeout(()=>{ const el=document.getElementById('f-'+path.replace(/\./g,'-')); if (el){ el.scrollIntoView({block:'center'}); el.focus(); } }, 30); }
+  else if (act==='goto'){ openSrcPanelFor(path); goSec(b.dataset.secid); setTimeout(()=>{ const el=document.getElementById('f-'+path.replace(/\./g,'-')); if (el){ el.scrollIntoView({block:'center'}); el.focus(); } }, 30); }
   else if (act==='save'){ saveNow(); }
   else if (act==='open'){ openRec(b.dataset.uid); }
   else if (act==='openhist'){ openRec(b.dataset.uid, 'history'); }
@@ -179,6 +184,8 @@ document.addEventListener('click', async e=>{
   else if (act==='import'){ $('#impfile').click(); }
   else if (act==='expall'){ exportMenu(true); }
   else if (act==='customvals'){ showCustomValues(); }
+  else if (act==='promote'){ try { await API.addOption(b.dataset.list, b.dataset.value); applyOptions(await API.options()); toast('Added to the list'); } catch(err){ toast(errMsg(err,'Could not add it.')); } showCustomValues(); }
+  else if (act==='rmopt'){ arm(b, 'opt'+b.dataset.list+b.dataset.value, 'Confirm remove', async ()=>{ try { await API.removeOption(b.dataset.list, b.dataset.value); applyOptions(await API.options()); toast('Removed from the list'); } catch(err){ toast(errMsg(err,'Could not remove it.')); } showCustomValues(); }); }
   else if (act==='close'){ $('#modal').hidden=true; }
   else if (act==='copy'){ const ta=$('#modal textarea'); navigator.clipboard?.writeText(ta.value).then(()=>toast('Copied'),()=>{ ta.select(); toast('Press Ctrl+C to copy'); }); }
   else if (act==='dl'){ doExport(b.dataset.kind, b.dataset.scope==='all'); }
@@ -218,7 +225,7 @@ function importFile(file){
       if (!r || !r.meta || !r.personal){ failed++; continue; }
       const uid = (r._uid && /^r[a-z0-9]{4,40}$/.test(r._uid)) ? r._uid : newUid();
       if (have.has(uid)){ skipped++; continue; }
-      const data=upgrade(r); data._uid=uid; delete data._modified; delete data._example;
+      const data=normalizeRecord(upgrade(prunedCopy(r))); data._uid=uid; delete data._modified; delete data._example;
       try { const res=await API.save(uid, data, 0); if (res.ok) made++; else skipped++; } catch(err){ failed++; }
     }
     await refreshList(); renderRecords();
@@ -245,6 +252,7 @@ async function afterSignIn(){
   view='records'; cur=null; curMeta=null;
   if (!ME.active){ renderAll(); return; }
   await refreshList();
+  try { applyOptions(await API.options()); } catch(e){ /* the form still works with the built-in lists */ }
   const last=sget(`spe.cur.${ME.id}`);
   if (last && LIST.some(r=>r.uid===last)) { await openRec(last, sget('spe.sec')||'meta'); return; }
   renderAll();

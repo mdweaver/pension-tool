@@ -27,7 +27,7 @@ function checkField(f, v, row){
   if (v==null || String(v).trim()==='') return (f.req ? {lvl:'err', msg:f.l+' is required.'} : null);
   if (f.t==='appref' && !appRefs().includes(v)) return {lvl:'warn', msg:`"${v}" is not listed in File & tracking any more. Pick a file from the list, or add it there.`};
   if (f.t==='code' && f.list==='QC' && !(v in CODES.QC)) return {lvl:'warn', msg:`"${v}" is not a listed quality code.`};
-  if (f.t==='code' && f.list!=='QC' && !(v in CODES[f.list])) return {lvl:'note', msg:`"${v}" is not in the list, so it is saved as typed. Use this for a value the list lacks; the PIs can add common ones to the list.`};
+  if (f.t==='code' && f.list!=='QC' && !(String(v).trim() in CODES[f.list])) return {lvl:'note', msg:`"${v}" is not in the list, so it is saved as typed. Use this for a value the list lacks; the PIs can add common ones to the list.`};
   if (f.t==='num'){ const n=Number(v); if (isNaN(n)) return {lvl:'err', msg:'Numbers only.'}; if (n<f.min||n>f.max) return {lvl:'warn', msg:`Expected ${f.min}–${f.max}.`}; if (!f.dec && !Number.isInteger(n)) return {lvl:'warn', msg:'Whole number expected.'}; }
   if (f.nameRule && !v.includes(',')) return {lvl:'warn', msg:'Name rule: LAST NAME, FIRST NAME M (e.g. JOHNSON, HENRY). Last name only → JOHNSON,'};
   return null;
@@ -36,7 +36,7 @@ function allChecks(r){
   const out=[];
   const walk=(fields,obj,base,sec,gtitle)=>{ for (const f of fields){ if (f.t==='br' || f.hide) continue;
       if (f.t==='sub'){ (obj[f.k]||[]).forEach((sr,j)=>walk(f.fields,sr,`${base}.${f.k}.${j}`,sec,gtitle)); continue; }
-      const res=checkField(f,obj[f.k],obj); if (res) out.push({...res, path:`${base}.${f.k}`, sec, where:`${gtitle} · ${f.l}`}); } };
+      const res=checkField(f,obj[f.k],obj); if (res && res.lvl!=='note') out.push({...res, path:`${base}.${f.k}`, sec, where:`${gtitle} · ${f.l}`}); } };
   for (const s of visSections()) for (const g of visGroups(s)){
     const v=r[s.id][g.id];
     if (g.repeat) v.forEach((row,i)=>{ if (!rowBlank(g,row)) walk(g.fields,row,`${s.id}.${g.id}.${i}`,s.id,`${g.title} ${i+1}`); });
@@ -69,7 +69,11 @@ function appRefs(){
   return out;
 }
 /* ---------- sources: page labels, the drop-down of sources used in this record, per-field source panels ---------- */
-const openFsrc = new Set();   // "rowpath|fieldkey" of per-field source panels that are open
+/* which per-field source panels are open: kept against the row object itself, so the state follows the row when rows
+   are sorted, and disappears with it when the row is deleted or the record is reloaded */
+const openFsrc = new WeakMap();
+const fsrcIsOpen = (row,k) => !!(row && openFsrc.has(row) && openFsrc.get(row).has(k));
+function fsrcSet(row,k,on){ if (!row) return; let s=openFsrc.get(row); if (!s){ s=new Set(); openFsrc.set(row,s); } if (on) s.add(k); else s.delete(k); }
 const SRC_ICON='<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9.5l3-3M7 4.5l1-1a2.5 2.5 0 013.5 3.5l-1 1M9 11.5l-1 1A2.5 2.5 0 014.5 9l1-1"/></svg>';
 const FSRC_TYPES=new Set(['text','name','code','date','num','area']);
 /* "p. 10" from a Fold3 address that carries a page number in its slug (…/image/259904703/byard-henry-page-10-us-civil-war-…); '' if there is none, so the person types one */
@@ -110,7 +114,7 @@ function fsrcPanelHTML(base,f,row){
 function fieldHTML(f, val, path, row){
   const h=fieldHTML0(f,val,path,row); if (f.t==='br') return h;
   const base=path.slice(0,path.lastIndexOf('.'));
-  return canFsrc(f,row) && openFsrc.has(base+'|'+f.k) ? h+fsrcPanelHTML(base,f,row) : h;
+  return canFsrc(f,row) && fsrcIsOpen(row,f.k) ? h+fsrcPanelHTML(base,f,row) : h;
 }
 function fieldHTML0(f, val, path, row){
   if (f.t==='br') return '<span class="fbreak"></span>';
@@ -215,11 +219,21 @@ function renderGuide(f, path){
 }
 
 /* datalists for codes and ratings */
+/* options an admin promoted from typed values (table list_options) join the built-in lists; run again after a change */
+const addedOptions=[];
+function applyOptions(rows){
+  for (const o of addedOptions) delete CODES[o.list][o.value];
+  addedOptions.length=0;
+  for (const o of rows||[]){ const L=CODES[o.list]; if (!L || o.list==='QC' || (o.value in L)) continue; L[o.value]=o.value; addedOptions.push({list:o.list,value:o.value}); }
+  buildDatalists();
+}
 function buildDatalists(){
   let h=''; for (const [k,L] of Object.entries(CODES)) h+=`<datalist id="dl-${k}">${Object.entries(L).map(([c,m])=>k==='QC'?`<option value="${esc(c)}" label="${esc(m)}"></option>`:`<option value="${esc(c)}"></option>`).join('')}</datalist>`;
   h+='<datalist id="dl-SRCS"></datalist>';
   h+=`<datalist id="dl-RATINGS">${RATINGS.map(r=>`<option value="${esc(r)}"></option>`).join('')}</datalist>`;
-  const d=document.createElement('div'); d.hidden=true; d.innerHTML=h; document.body.appendChild(d);
+  const old=document.getElementById('dlbox'); if (old) old.remove();
+  const d=document.createElement('div'); d.id='dlbox'; d.hidden=true; d.innerHTML=h; document.body.appendChild(d);
+  if (cur && typeof refreshSrcList==='function') refreshSrcList();
 }
 
 /* ---------- field lookup by path ---------- */

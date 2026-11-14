@@ -20,6 +20,13 @@ function newRecord(){
 }
 /* Records saved before the full-text change hold short codes ("W", "VA"). Turn them into the descriptions
    ("Widow", "Virginia"). Quality codes stay as they are. Safe to run again: only exact old codes change. */
+/* Country is typed in normal case: "US"/"USA" become "United States", and ALL-CAPS words from before the change
+   become "England", "New Zealand" (short ones such as "UK" are left alone). The data migration does the same. */
+function countryText(v){
+  if (v==='US' || v==='USA') return COUNTRY_US;
+  if (/^[A-Z][A-Z .'&-]{3,}$/.test(v)) return v.toLowerCase().replace(/(^|[ .'&-])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
+  return v;
+}
 function legacyToText(r){
   const fix=(fields,obj)=>{
     const countryKeys=new Set(fields.filter(f=>f.cty).map(f=>f.cty));
@@ -27,13 +34,38 @@ function legacyToText(r){
       if (f.t==='sub'){ if (Array.isArray(obj[f.k])) obj[f.k].forEach(row=>row&&typeof row==='object'&&fix(f.fields,row)); continue; }
       const v=obj[f.k]; if (typeof v!=='string') continue;
       if (f.t==='code' && f.list!=='QC' && Object.prototype.hasOwnProperty.call(LEGACY[f.list],v)) obj[f.k]=LEGACY[f.list][v];
-      else if (countryKeys.has(f.k) && (v==='US' || v==='USA')) obj[f.k]=COUNTRY_US;
+      else if (countryKeys.has(f.k)) obj[f.k]=countryText(v);
     }
   };
   for (const s of SCHEMA) for (const g of s.groups){ const v=r[s.id]&&r[s.id][g.id]; if (!v) continue;
     if (g.repeat){ if (Array.isArray(v)) v.forEach(row=>row&&typeof row==='object'&&fix(g.fields,row)); } else fix(g.fields,v); }
   return r;
 }
+/* Match a typed value to the list's own spelling ignoring case, and read an old short code ("M", "VA") as its
+   description. Anything else is returned as typed (a custom value). */
+function normCode(f, v){
+  const t=v.trim(); if (!t) return v;
+  const L=CODES[f.list]; if (t in L) return t;
+  const hit=Object.keys(L).find(k=>k.toLowerCase()===t.toLowerCase()); if (hit) return hit;
+  const old=Object.keys(LEGACY[f.list]).find(k=>k.toLowerCase()===t.toLowerCase()); return old ? LEGACY[f.list][old] : v;
+}
+/* Apply normCode to every list-backed field of a record (done when saving and exporting, so a box that still has the
+   cursor in it is saved in the list's spelling too). A state that becomes a US state fills a blank country. */
+function normalizeRecord(r){
+  const fix=(fields,obj)=>{
+    for (const f of fields){
+      if (f.t==='sub'){ if (Array.isArray(obj[f.k])) obj[f.k].forEach(x=>x&&typeof x==='object'&&fix(f.fields,x)); continue; }
+      if (f.t!=='code' || f.list==='QC' || typeof obj[f.k]!=='string') continue;
+      const v=normCode(f,obj[f.k]);
+      if (v!==obj[f.k]){ obj[f.k]=v; if (f.cty && US_STATES.has(v) && !String(obj[f.cty]||'').trim()) obj[f.cty]=COUNTRY_US; }
+    }
+  };
+  for (const s of SCHEMA) for (const g of s.groups){ const v=r[s.id]&&r[s.id][g.id]; if (!v) continue;
+    if (g.repeat){ if (Array.isArray(v)) v.forEach(x=>x&&typeof x==='object'&&fix(g.fields,x)); } else fix(g.fields,v); }
+  return r;
+}
+/* a record as it should leave the browser: without empty source entries, in the lists' spelling */
+function outgoing(r){ return normalizeRecord(prunedCopy(r)); }
 function upgrade(r){ // fill any groups/fields added to the schema since the record was made
   legacyToText(r);
   for (const s of SCHEMA){ r[s.id]=r[s.id]||{}; for (const g of s.groups){

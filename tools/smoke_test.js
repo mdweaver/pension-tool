@@ -146,6 +146,43 @@ const ok = (cond, msg) => { results.push((cond ? '  ok   ' : '  FAIL ') + msg); 
     const saved = await page.evaluate(() => cur.deps.depo[0].file);
     ok(after === before + 1 && opts.length >= 3 && opts.includes('Application number 000001') && opts.includes('Certificate number 000002') && saved === opts[2], 'immigration can have several rows and depositions pick a file from File & tracking');
   });
+  await step('old codes are fixed when saving even with the cursor still in the box; built-in words are not list entries', async () => {
+    await page.click('nav [data-sec="personal"]');
+    const sel = '[data-path="personal.death.state"]';
+    await page.fill('[data-path="personal.death.country"]', '');
+    await page.focus(sel); await page.fill(sel, 'va'); await page.dispatchEvent(sel, 'input');
+    await page.evaluate(() => saveNow(true));
+    const r = await page.evaluate(() => [cur.personal.death.state, cur.personal.death.country, document.querySelector('[data-path="personal.death.state"]').value]);
+    const ctor = await page.evaluate(() => { const f = fieldForPath('personal.death.source'); const c = checkField(f, 'constructor', cur.personal.death); return [c && c.lvl, 'constructor' in CODES.MF, String(CODES.STATUS['toString'])]; });
+    ok(r[0] === 'Virginia' && r[1] === 'United States' && r[2] === 'Virginia' && ctor[0] === 'note' && ctor[1] === false && ctor[2] === 'undefined', 'old codes are fixed when saving even with the cursor still in the box; built-in words are not list entries');
+  });
+  await step('a value typed outside a list is kept and is not listed as a problem', async () => {
+    await page.fill('[data-path="personal.death.state"]', 'Narnia'); await page.dispatchEvent('[data-path="personal.death.state"]', 'input');
+    await page.click('#main h1');
+    const r = await page.evaluate(() => [cur.personal.death.state, allChecks(cur).some(c => /not in the list/.test(c.msg)), document.querySelector('[data-path="personal.death.state"]').classList.contains('custom')]);
+    await page.evaluate(() => saveNow(true));
+    ok(r[0] === 'Narnia' && r[1] === false && r[2] === true, 'a value typed outside a list is kept and is not listed as a problem');
+  });
+  await step('a source error inside a closed per-field panel can still be reached from the check list', async () => {
+    await page.evaluate(() => { cur.personal.death.srcs = [{ field: 'cause', url: 'not a url', note: '' }]; renderMain(); sideRefresh(); });
+    const p = await page.evaluate(() => (allChecks(cur).find(c => /srcs\.\d+\.url$/.test(c.path)) || {}).path);
+    await page.click(`.chk[data-path="${p}"]`);
+    await page.waitForTimeout(200);
+    const there = await page.evaluate(path => !!document.getElementById(idOf(path)), p);
+    await page.evaluate(() => { cur.personal.death.srcs = []; renderMain(); });
+    ok(!!p && there, 'a source error inside a closed per-field panel can still be reached from the check list');
+  });
+  await step('an open source panel stays with its row when rows are sorted or removed', async () => {
+    await page.click('nav [data-sec="family"]');
+    await page.evaluate(() => { cur.family.children[0].b_date = '--/--/1900'; cur.family.children[1].b_date = '--/--/1850'; renderMain(); });
+    await page.click('[data-act=fsrc][data-path="family.children.0"][data-fkey="name"]');
+    const first = await page.evaluate(() => cur.family.children[0].name);
+    await page.click('[data-act=sort][data-path="family.children"]');
+    const afterSort = await page.evaluate(() => { const d = document.querySelector('.fsrc[data-for^="family.children."]'); const i = d ? +d.dataset.for.split('|')[0].split('.')[2] : -1; return [i, i >= 0 ? cur.family.children[i].name : '']; });
+    await page.click('[data-act=del][data-path="family.children.0"]'); await page.click('[data-act=del][data-path="family.children.0"]');
+    const afterDel = await page.evaluate(() => { const d = document.querySelector('.fsrc[data-for^="family.children."]'); return [d ? d.dataset.for.split('|')[0] : '', cur.family.children.length, cur.family.children[0].name]; });
+    ok(afterSort[1] === first && afterSort[0] === 1 && afterDel[0] === 'family.children.0' && afterDel[2] === first, 'an open source panel stays with its row when rows are sorted or removed');
+  });
   await step('cut sections are hidden but kept in the data', async () => {
     const r = await page.evaluate(() => [!!document.querySelector('nav [data-sec="aff"]'), !!document.querySelector('nav [data-sec="va"]'), !!document.querySelector('nav [data-sec="slavery"]'), !!document.querySelector('nav [data-sec="medical"]'), 'aff' in cur && 'slavery' in cur]);
     ok(!r[0] && !r[1] && !r[2] && !r[3] && r[4], 'cut sections are hidden but kept in the data');
@@ -161,6 +198,18 @@ const ok = (cond, msg) => { results.push((cond ? '  ok   ' : '  FAIL ') + msg); 
     await page.click('nav [data-sec="team"]');
     await page.waitForSelector('.team tbody tr', T);
     ok((await page.$$('.team tbody tr')).length === 4, 'an admin sees Team & activity');
+  });
+  await step('an admin can review a typed value and add it to a list, then remove it', async () => {
+    await page.click('[data-act=customvals]');
+    await page.waitForSelector('[data-act=promote]', T);
+    const row = await page.$eval('[data-act=promote]', b => b.closest('tr').textContent);
+    await page.click('[data-act=promote]');
+    await page.waitForSelector('[data-act=rmopt]', T);
+    const listed = await page.evaluate(() => 'Narnia' in CODES.STATES && !!document.querySelector('#dl-STATES option[value="Narnia"]'));
+    await page.click('[data-act=rmopt]'); await page.click('[data-act=rmopt]');
+    await page.waitForSelector('[data-act=promote]', T);
+    const gone = await page.evaluate(() => !('Narnia' in CODES.STATES));
+    ok(/Narnia/.test(row) && listed && gone, 'an admin can review a typed value and add it to a list, then remove it');
   });
   await step('no horizontal scrolling on a phone', async () => {
     await page.setViewportSize({ width: 400, height: 850 });

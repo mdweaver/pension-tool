@@ -6,7 +6,7 @@
 #
 # Before running, the target must already have the tables: run the "Check and deploy" workflow
 # against it (or the SQL files in supabase/migrations, in order).
-# It REPLACES all rows in profiles, records, record_versions and keepalive with the backup's.
+# It REPLACES all rows in profiles, records, record_versions, list_options and keepalive with the backup's.
 # It asks you to type the target's host name to confirm (or pass --yes).
 set -euo pipefail
 DIR="${1:?backup folder (decrypted)}"; URL="${2:?target database connection string}"; shift 2
@@ -39,7 +39,7 @@ if [ $YES -eq 0 ]; then
   read -r -p "This REPLACES the app data in the target. Type RESTORE to continue: " ans
   [ "$ans" = "RESTORE" ] || { echo "Cancelled."; exit 1; }
 fi
-ARGS=(-c "set session_replication_role = replica" -c "truncate public.record_versions, public.records, public.profiles, public.keepalive")
+ARGS=(-c "set session_replication_role = replica" -c "truncate public.record_versions, public.records, public.profiles, public.keepalive, public.list_options")
 [ $WITH_AUTH -eq 1 ] && ARGS+=(-f "$DIR/auth_data.sql")
 ARGS+=(-f "$DIR/public_data.sql")
 psql "$URL" -qX -v ON_ERROR_STOP=1 --single-transaction "${ARGS[@]}" >/dev/null

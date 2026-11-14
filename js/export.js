@@ -25,9 +25,9 @@ function exportMenu(all){
 }
 async function doExport(kind, all){
   let recs;
-  try { recs = all ? (await API.allData()).map(upgrade) : [cur]; } catch(e){ return toast(errMsg(e,'Could not fetch the records.')); }
+  try { recs = (all ? (await API.allData()).map(upgrade) : [cur]).map(outgoing); } catch(e){ return toast(errMsg(e,'Could not fetch the records.')); }
   const name = (all ? `pension_records_${stamp()}` : `${fileBase(cur)}_${stamp()}`) + '.' + kind;
-  const text = kind==='json' ? JSON.stringify(all?recs.map(prunedCopy):prunedCopy(cur), null, 1) : toCSV(recs);
+  const text = kind==='json' ? JSON.stringify(all?recs:recs[0], null, 1) : toCSV(recs);
   let ok=false;
   try { const blob=new Blob([text],{type:kind==='json'?'application/json':'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); ok = (window.self===window.top); } catch(e){ ok=false; }
   if (!ok){ $('#expout').innerHTML=`<p class="intro" style="margin:12px 0 6px">If no download started (some embedded previews block downloads), copy the text below and save it as <code>${esc(name)}</code>.</p><div class="tools" style="margin-bottom:6px"><button class="btn" data-act="copy" type="button">Copy</button></div><textarea readonly>${esc(text)}</textarea>`; }

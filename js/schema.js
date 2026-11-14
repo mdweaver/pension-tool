@@ -236,12 +236,14 @@ const LEGACY_ALL = {
   STATUS: {P:'In progress',C:'Complete',K:'Checked (QC)'}
 };
 LEGACY_ALL.STATES.US = 'United States (general)';
+/* lists have no prototype, so a typed word like "constructor" is never mistaken for a list entry by `in` or [] lookups */
+const plain = o => Object.assign(Object.create(null), o);
 const LEGACY = {}, CODES = {};
 for (const [list, m] of Object.entries(LEGACY_ALL)){
-  if (list==='QC'){ CODES.QC = m; continue; }
-  LEGACY[list] = m;
+  if (list==='QC'){ CODES.QC = plain(m); continue; }
+  LEGACY[list] = plain(m);
   const names = Object.values(m); if (list==='STATES') names.sort((a,b)=>a.localeCompare(b));
-  CODES[list] = Object.fromEntries(names.map(n=>[n,n]));
+  CODES[list] = plain(Object.fromEntries(names.map(n=>[n,n])));
 }
 /* options added after the original lists (these have no old code) */
 CODES.STATUS['Imported (unchecked)'] = 'Imported (unchecked)';
@@ -270,14 +272,14 @@ const SRCS = {t:'sub', k:'srcs', l:'More sources', empty:true, fields:[
   T('field','Field',20,{tag:'project',nocase:true,help:'Which field of this entry the source is for. Blank means the whole entry.'}),
   U('url','Source (Fold3 page URL)',52,{tag:'project',help:'The Fold3 web address of the page this came from. Pick one already used in this record from the drop-down, or paste a new one.'}),
   T('note','Page / label',14,{tag:'project',nocase:true,help:'Short name for this source, e.g. p. 14. Filled in from the Fold3 address when it contains a page number; otherwise type your own.'}) ]};
-// Where something happened: address, city, county, state, country (filled with US when a US state is chosen), quality.
+// Where something happened: address, city, county, state, country (filled with United States when a US state is chosen), quality.
 // o.addr:false leaves out the address box for blocks that already have a street field.
 const US_STATES = new Set('AK AL AR AZ CA CO CT DC DE FL GA HI IA ID IL IN KS KY LA MA MD ME MI MN MO MS MT NC ND NE NH NJ NM NV NY OH OK OR PA RI SC SD TN TX UT VA VT WA WI WV WY US'.split(' ').map(c=>LEGACY.STATES[c]));
 const PLACE = (p, ua, q=true, o={}) => [
   ...(o.addr===false ? [] : [T(p+'addr','Address',28,{tag:'project',help:'Street address, plantation, ship, institution or other specific location, exactly as the file gives it. Leave blank if there is none.'})]),
   T(p+'city','City',20,{ua:ua[0]}), T(p+'county','County',20,{ua:ua[1]}),
   C(p+'state','State','STATES',{ua:ua[2],cty:p+'country'}),
-  T(p+'country','Country',12,{tag:'project',help:'Filled in automatically as US when you pick a US state. For a place outside the US, type the country (the State box can still hold the province or country code from the manual\u2019s Appendix A).'}),
+  T(p+'country','Country',12,{tag:'project',help:'Filled in automatically as United States when you pick a US state. For a place outside the US, type the country (the State box can still hold the province or country code from the manual\u2019s Appendix A).'}),
   ...(q?[Q(p+'place_q',{ua:ua[3]})]:[])];
 const IMG = T('img','Image #',8,{help:'Image or page number in the scanned file where this was found (e.g. 0042, or 41–43). Lets a checker or a later AI pass go straight to the source.', tag:'project', hide:true}); // retired: every row now has a Fold3 source URL (SRC, added to all blocks at the end of this file)
 const SRC = U('src','Source (Fold3 page URL)',52,{tag:'project',help:'The Fold3 web address of the exact page of the pension or application file where this was found. Open that page in Fold3 and copy the address from the browser bar. If the information is spread over several pages, give the page you rely on most and say so in Remarks.'});
@@ -411,7 +413,7 @@ const SCHEMA = [
       T('result','Result of treatment',36,{help:'RETURNED TO DUTY, DISCHARGED, TRANSFERRED, DIED, etc.'}), T('source','Source document',26,{tag:'project'}), IMG ]}
    ]},
  { id:'apps', n:'5', title:'Applications & rulings', ua:'Screen 7 · Application and rulings',
-   intro:'One row per application/claim-form pair. Rows can be entered in any order; use <b>Sort by date</b> before finishing (the old Alt-S). <b>Writes (Y/N)</b> on the claim form is one of our literacy measures, so fill it whenever the form says.',
+   intro:'One row per application/claim-form pair. Rows can be entered in any order; use <b>Sort by date</b> before finishing (the old Alt-S). <b>Writes</b> on the claim form is one of our literacy measures, so fill it whenever the form says.',
    groups:[
     {id:'app', title:'Applications', repeat:true, sortBy:'date', fields:[
       C('claimant','Claimant','CLAIMANT',{tag:'project',help:'Who filed: the sailor, widow, minor child (via guardian) or parent. The old screen assumed the soldier; Navy files often hold the widow\'s and children\'s claims too.'}),

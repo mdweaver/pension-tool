@@ -27,18 +27,18 @@ reset role;
 
 \echo == T4 RA1 creates a record; trigger stamps creator, sailor_id, name
 set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000a1';
-select save_record('rabc123', '{"_uid":"rabc123","meta":{"file":{"sailor_id":"S-001","status":"P","minutes":"3"}},"personal":{"names":[{"name":"JOHNSON, HENRY"}]},"family":{"children":[{"name":"WILLIAM","sex":"M"}]}}', 0);
+select save_record('rabc123', '{"_uid":"rabc123","meta":{"file":{"sailor_id":"S-001","status":"In progress","minutes":"3"}},"personal":{"names":[{"name":"JOHNSON, HENRY"}]},"family":{"children":[{"name":"WILLIAM","sex":"M"}]}}', 0);
 \echo == T5 RA1 cannot make an RA an admin
 update profiles set role='admin' where email='ra1@ubc.ca';
 select role from profiles where email='ra1@ubc.ca';
 \echo == T6 RA1 cannot fake updated_by / created_by via direct update
-update records set created_by = '00000000-0000-0000-0000-0000000000a2', updated_by='00000000-0000-0000-0000-0000000000a2', data = jsonb_set(data,'{meta,file,status}','"C"') where uid='rabc123';
+update records set created_by = '00000000-0000-0000-0000-0000000000a2', updated_by='00000000-0000-0000-0000-0000000000a2', data = jsonb_set(data,'{meta,file,status}','"Complete"') where uid='rabc123';
 select uid, version, status, (select email from profiles where id=created_by) creator, (select email from profiles where id=updated_by) last_editor from records;
 reset role;
 
 \echo == T7 RA2 edits with the right base version (2) -> v3
 set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000a2';
-select save_record('rabc123', '{"_uid":"rabc123","_modified":"x","meta":{"file":{"sailor_id":"S-001","status":"C","minutes":"9"}},"personal":{"names":[{"name":"JOHNSON, HENRY T"}]},"family":{"children":[{"name":"WILLIAM","sex":"M"},{"name":"ROSA","sex":"F"}]}}', 2);
+select save_record('rabc123', '{"_uid":"rabc123","_modified":"x","meta":{"file":{"sailor_id":"S-001","status":"Complete","minutes":"9"}},"personal":{"names":[{"name":"JOHNSON, HENRY T"}]},"family":{"children":[{"name":"WILLIAM","sex":"M"},{"name":"ROSA","sex":"F"}]}}', 2);
 \echo == T8 RA1 saves from a stale copy (base 2) -> conflict naming Ben RA
 reset role; set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000a1';
 select save_record('rabc123', '{"meta":{"file":{"sailor_id":"S-001"}}}', 2) - 'updated_at';

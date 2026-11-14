@@ -4,7 +4,7 @@
 #   usage: DB_URL='postgresql://postgres.<ref>:<password>@<pooler-host>:5432/postgres' bash tools/backup.sh OUTDIR
 #
 # The folder gets:
-#   public_data.sql   all rows of the app's tables (profiles, records, record_versions, keepalive)
+#   public_data.sql   all rows of the app's tables (profiles, records, record_versions, list_options, keepalive)
 #   auth_data.sql     the logins (auth.users, auth.identities, including password hashes)
 #   records.jsonl     one line per record (readable without a database)
 #   record_versions.jsonl, profiles.jsonl   the history and the people, likewise
