@@ -15,8 +15,8 @@ function renderTop(){
   for (const id of ['b-records','b-new','b-exp','b-me']) { const b=document.getElementById(id); if (b) b.hidden=!signed || (id==='b-new' && !(ME && ME.active)); }
   if (signed) $('#b-me').textContent = `${ME.display_name||ME.email}${isAdmin()?' · admin':''}`;
   if (!signed || !cur){ $('#cur').innerHTML = signed ? '<span class="sid">No file open</span>' : ''; renderSaveState(); return; }
-  const st=cur.meta.file.status||'P';
-  $('#cur').innerHTML=`<b>${esc(recName(cur))}</b><span class="sid">${esc(cur.meta.file.sailor_id||'no Sailor ID')}</span><span class="pill st-${st==='C'?'complete':st==='K'?'checked':'prog'}">${esc(CODES.STATUS[st]||st)}</span>${curMeta.deleted?'<span class="pill example">Deleted</span>':''}`;
+  const st=cur.meta.file.status||'In progress';
+  $('#cur').innerHTML=`<b>${esc(recName(cur))}</b><span class="sid">${esc(cur.meta.file.sailor_id||'no Sailor ID')}</span><span class="pill st-${st==='Complete'?'complete':st==='Checked (QC)'?'checked':'prog'}">${esc(CODES.STATUS[st]||st)}</span>${curMeta.deleted?'<span class="pill example">Deleted</span>':''}`;
   renderSaveState();
 }
 function renderNav(){
@@ -159,9 +159,29 @@ async function renderTeam(){
     <div class="sechead" style="margin-top:22px"><h1 style="font-size:18px">Activity by day</h1><span class="ua">from the edit history</span></div>
     <div class="rtab-wrap"><table class="rtab"><thead><tr><th>Day</th><th>Person</th><th>Records created</th><th>Saves</th><th>Records touched</th><th>First save</th><th>Last save</th></tr></thead><tbody>
     ${act.length?act.map(a=>`<tr><td class="m">${esc(a.day)}</td><td>${esc(a.display_name)}</td><td class="m">${a.records_created}</td><td class="m">${a.saves}</td><td class="m">${a.records_touched}</td><td class="m">${esc(fmtTime(a.first_save))}</td><td class="m">${esc(fmtTime(a.last_save))}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">No saves yet.</td></tr>'}
-    </tbody></table></div></div>`;
+    </tbody></table></div>
+    <div class="sechead" style="margin-top:22px"><h1 style="font-size:18px">Values outside the lists</h1><span class="ua">what RAs typed instead of choosing</span></div>
+    <p class="intro">Fields with a list also accept other text. This shows every such value across all records, so you can decide which to add to the list (add a line to that list in <code>js/schema.js</code>; values already saved match it, so nothing needs migrating).</p>
+    <div class="tools"><button class="btn" data-act="customvals" type="button">Show values outside the lists</button></div><div id="customvals"></div></div>`;
     $('#main').innerHTML=h;
   } catch(e){ $('#main').innerHTML=`<div class="callout">${esc(errMsg(e,'Could not load the team.'))}</div>`; }
+}
+/* every value in a list-backed field that is not one of the list's own entries, counted across records */
+function customValues(recs){
+  const tally=new Map();
+  for (const r of recs){
+    const seen=(f,v)=>{ if (typeof v!=='string'||!v.trim()||v in CODES[f.list]) return; const key=f.list+'\u0000'+v; const t=tally.get(key)||{list:f.list,value:v,n:0,recs:new Set()}; t.n++; t.recs.add(r._uid); tally.set(key,t); };
+    const walk=(fields,obj)=>{ for (const f of fields){ if (f.t==='sub'){ (obj[f.k]||[]).forEach(x=>x&&walk(f.fields,x)); continue; } if (f.t==='code' && f.list!=='QC' && !f.hide) seen(f,obj[f.k]); } };
+    for (const s of SCHEMA) if (!s.hide) for (const g of s.groups){ if (g.hide) continue; const v=r[s.id]&&r[s.id][g.id]; if (!v) continue; if (g.repeat){ if (Array.isArray(v)) v.forEach(x=>x&&walk(g.fields,x)); } else walk(g.fields,v); }
+  }
+  return [...tally.values()].sort((a,b)=>a.list.localeCompare(b.list)||b.n-a.n);
+}
+async function showCustomValues(){
+  const box=$('#customvals'); box.innerHTML='<p class="intro">Reading all records…</p>';
+  try {
+    const rows=customValues((await API.allData()).map(upgrade));
+    box.innerHTML = rows.length ? `<div class="rtab-wrap"><table class="rtab"><thead><tr><th>List</th><th>Value typed</th><th>Times used</th><th>In records</th></tr></thead><tbody>${rows.map(t=>`<tr><td class="m">${esc(t.list)}</td><td>${esc(t.value)}</td><td class="m">${t.n}</td><td class="m">${t.recs.size}</td></tr>`).join('')}</tbody></table></div>` : '<p class="intro">Nothing: every value in every list-backed field is one of the list\'s own entries.</p>';
+  } catch(e){ box.innerHTML=`<div class="callout">${esc(errMsg(e,'Could not read the records.'))}</div>`; }
 }
 
 /* ---------- account ---------- */

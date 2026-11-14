@@ -15,10 +15,27 @@ function newUid(){ return 'r'+Date.now().toString(36)+Math.random().toString(36)
 function newRecord(){
   const r={_uid:newUid(), _schema:2};
   for (const s of SCHEMA){ r[s.id]={}; for (const g of s.groups){ r[s.id][g.id] = g.repeat ? blankRows(g) : blankFields(g.fields); } }
-  r.meta.file.status='P'; r.meta.file.minutes='0';
+  r.meta.file.status='In progress'; r.meta.file.minutes='0';
+  return r;
+}
+/* Records saved before the full-text change hold short codes ("W", "VA"). Turn them into the descriptions
+   ("Widow", "Virginia"). Quality codes stay as they are. Safe to run again: only exact old codes change. */
+function legacyToText(r){
+  const fix=(fields,obj)=>{
+    const countryKeys=new Set(fields.filter(f=>f.cty).map(f=>f.cty));
+    for (const f of fields){
+      if (f.t==='sub'){ if (Array.isArray(obj[f.k])) obj[f.k].forEach(row=>row&&typeof row==='object'&&fix(f.fields,row)); continue; }
+      const v=obj[f.k]; if (typeof v!=='string') continue;
+      if (f.t==='code' && f.list!=='QC' && Object.prototype.hasOwnProperty.call(LEGACY[f.list],v)) obj[f.k]=LEGACY[f.list][v];
+      else if (countryKeys.has(f.k) && (v==='US' || v==='USA')) obj[f.k]=COUNTRY_US;
+    }
+  };
+  for (const s of SCHEMA) for (const g of s.groups){ const v=r[s.id]&&r[s.id][g.id]; if (!v) continue;
+    if (g.repeat){ if (Array.isArray(v)) v.forEach(row=>row&&typeof row==='object'&&fix(g.fields,row)); } else fix(g.fields,v); }
   return r;
 }
 function upgrade(r){ // fill any groups/fields added to the schema since the record was made
+  legacyToText(r);
   for (const s of SCHEMA){ r[s.id]=r[s.id]||{}; for (const g of s.groups){
     if (g.repeat){ if (!Array.isArray(r[s.id][g.id])) r[s.id][g.id]=blankRows(g); r[s.id][g.id]=r[s.id][g.id].map(row=>Object.assign(blankFields(g.fields),row)); }
     else r[s.id][g.id]=Object.assign(blankFields(g.fields), r[s.id][g.id]||{});

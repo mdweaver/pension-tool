@@ -226,3 +226,7 @@ table.rtab { width: 100%; border-collapse: collapse; font-size: 13px; }
 .in.lbl { width: calc(14ch + 16px); flex: 0 0 auto; font-family: var(--f-sans); text-transform: none; }
 .srcblock .urlrow + .urlrow { margin-top: 3px; }
 @media (max-width: 700px) { .urlrow { flex-wrap: wrap; } .in.lbl { width: 12ch; } }
+
+/* full-text values */
+.in.custom { border-color: var(--accent); border-style: dashed; }
+.ctab td.full { font-family: var(--f-sans); width: auto; color: inherit; }

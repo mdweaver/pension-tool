@@ -26,7 +26,8 @@ function checkField(f, v, row){
   }
   if (v==null || String(v).trim()==='') return (f.req ? {lvl:'err', msg:f.l+' is required.'} : null);
   if (f.t==='appref' && !appRefs().includes(v)) return {lvl:'warn', msg:`"${v}" is not listed in File & tracking any more. Pick a file from the list, or add it there.`};
-  if (f.t==='code' && !(v in CODES[f.list])) return {lvl:'warn', msg:`"${v}" is not a listed code. Keep it only if you mean to override.`};
+  if (f.t==='code' && f.list==='QC' && !(v in CODES.QC)) return {lvl:'warn', msg:`"${v}" is not a listed quality code.`};
+  if (f.t==='code' && f.list!=='QC' && !(v in CODES[f.list])) return {lvl:'note', msg:`"${v}" is not in the list, so it is saved as typed. Use this for a value the list lacks; the PIs can add common ones to the list.`};
   if (f.t==='num'){ const n=Number(v); if (isNaN(n)) return {lvl:'err', msg:'Numbers only.'}; if (n<f.min||n>f.max) return {lvl:'warn', msg:`Expected ${f.min}–${f.max}.`}; if (!f.dec && !Number.isInteger(n)) return {lvl:'warn', msg:'Whole number expected.'}; }
   if (f.nameRule && !v.includes(',')) return {lvl:'warn', msg:'Name rule: LAST NAME, FIRST NAME M (e.g. JOHNSON, HENRY). Last name only → JOHNSON,'};
   return null;
@@ -62,7 +63,7 @@ function appRefs(){
   const out=[];
   for (const r of ((cur && cur.meta && cur.meta.appfiles) || [])){
     const n=String(r.number||'').trim(); if (!n) continue;
-    const lab=`${CODES.APPCERT[r.kind]||'File number'} ${n}`;
+    const lab=`${r.kind||'File number'} ${n}`;
     if (!out.includes(lab)) out.push(lab);
   }
   return out;
@@ -115,7 +116,7 @@ function fieldHTML0(f, val, path, row){
   if (f.t==='br') return '<span class="fbreak"></span>';
   const id='f-'+path.replace(/\./g,'-');
   const w=`style="--w:${f.t==='date'?10:Math.min(f.w||12,48)}"`;
-  const chk=checkField(f,val,row); const cls=chk?(chk.lvl==='err'?' bad':' warn'):'';
+  const chk=checkField(f,val,row); const cls=chk?(chk.lvl==='err'?' bad':chk.lvl==='note'?' custom':' warn'):'';
   const da=`data-path="${path}" id="${id}"`;
   let lab=`<label for="${id}" title="${esc(f.l)}">${esc(f.l)}</label>`;
   if (canFsrc(f,row)){
@@ -143,11 +144,14 @@ function fieldHTML0(f, val, path, row){
     const L=CODES[f.list]; const odd = val && !(val in L) ? `<option value="${esc(val)}" selected>${esc(val)} (not in list)</option>` : '';
     return `<div class="f">${lab}<select class="in${cls}" ${da} style="--w:${Math.max(...Object.values(L).map(x=>x.length))}"><option value=""></option>${Object.entries(L).map(([k,m])=>`<option value="${esc(k)}"${k===val?' selected':''}>${esc(m)}</option>`).join('')}${odd}</select></div>`;
   }
+  if (f.t==='code' && f.list!=='QC'){ // full-text value: pick from the list or type something else
+    return `<div class="f">${lab}<input class="in txtplain${cls}" ${da} style="--w:${f.w+3}" value="${esc(val)}" list="dl-${f.list}" autocomplete="off" title="Choose from the list or type another value"></div>`;
+  }
   if (f.t==='code'){
     const m = val && CODES[f.list][val] ? CODES[f.list][val] : '';
     return `<div class="f">${lab}<input class="in mono${cls}" ${da} style="--w:${Math.max(f.w,2)+3}" value="${esc(val)}" maxlength="${f.w}" list="dl-${f.list}" autocomplete="off"><span class="meaning">${esc(m)}</span></div>`;
   }
-  const mono = f.t==='num' ? ' mono' : ' txt';
+  const mono = f.t==='num' ? ' mono' : f.nocase ? ' txtplain' : ' txt';
   const list = f.list ? ` list="dl-${f.list}"` : '';
   return `<div class="f">${lab}<input class="in${mono}${cls}" ${da} ${w} value="${esc(val)}" autocomplete="off"${list}${f.t==='num'?' inputmode="decimal"':''}></div>`;
 }
@@ -193,9 +197,10 @@ function renderGuide(f, path){
     if (f.t==='date') h+=`<p><b>Year, month, day</b> go in separate boxes. If the file gives only the year, or the year and month, leave the other boxes empty (1865 → --/--/1865; April 1865 → 04/--/1865). Type <kbd>-</kbd> for a single digit you can't read. An incomplete date needs a quality code.</p>`;
     if (f.t==='url') h+=`<p>Paste the page address from the Fold3 browser bar. <b>Open ↗</b> beside the box opens it.</p>`;
     if (f.t==='appref' && !appRefs().length) h+=`<p><b>No application or certificate numbers are entered yet.</b> Add them in 0. File &amp; tracking and they will appear in this list.</p>`;
-    if (f.cty) h+=`<p>Choosing a US state fills Country with US.</p>`;
+    if (f.cty) h+=`<p>Choosing a US state fills Country with United States.</p>`;
     if (help) h+=`<p>${esc(help)}</p>`;
-    if (f.t==='code'){ const L=CODES[f.list]; h+=`<div class="ctabwrap"><table class="ctab">${Object.entries(L).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table></div>`; }
+    if (f.t==='code' && f.list==='QC'){ const L=CODES[f.list]; h+=`<div class="ctabwrap"><table class="ctab">${Object.entries(L).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table></div>`; }
+    else if (f.t==='code'){ h+=`<p>Choose from the list or type another value (it is saved as typed). Typing an old short code, such as <b>M</b>, turns into the full text when you leave the box.</p><div class="ctabwrap"><table class="ctab">${Object.values(CODES[f.list]).map(v=>`<tr><td class="full">${esc(v)}</td></tr>`).join('')}</table></div>`; }
     if (f.t==='date' && f.q) h+=`<div class="src">Quality codes: ${Object.entries(CODES.QC).map(([k,v])=>`<b>${k}</b> ${esc(v)}`).join(' · ')}</div>`;
     h+='</div>';
   } else {
@@ -211,7 +216,7 @@ function renderGuide(f, path){
 
 /* datalists for codes and ratings */
 function buildDatalists(){
-  let h=''; for (const [k,L] of Object.entries(CODES)) h+=`<datalist id="dl-${k}">${Object.entries(L).map(([c,m])=>`<option value="${esc(c)}" label="${esc(m)}"></option>`).join('')}</datalist>`;
+  let h=''; for (const [k,L] of Object.entries(CODES)) h+=`<datalist id="dl-${k}">${Object.entries(L).map(([c,m])=>k==='QC'?`<option value="${esc(c)}" label="${esc(m)}"></option>`:`<option value="${esc(c)}"></option>`).join('')}</datalist>`;
   h+='<datalist id="dl-SRCS"></datalist>';
   h+=`<datalist id="dl-RATINGS">${RATINGS.map(r=>`<option value="${esc(r)}"></option>`).join('')}</datalist>`;
   const d=document.createElement('div'); d.hidden=true; d.innerHTML=h; document.body.appendChild(d);

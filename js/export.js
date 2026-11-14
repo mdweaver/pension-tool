@@ -64,5 +64,5 @@ function exampleRecord(){
   r.deps.depo=[{...G('deps','depo'), name:'SAMPLE, THOMAS', rank:'LANDSMAN', dep:'M', file:'Application number 000001', signs:'M', date:'09/12/1890', t1:'H', period:'W', info_date:'--/--/1864', info_date_q:'6', desc:'WAS SHIPMATE ON THE MINNESOTA AND SAW HIM TAKEN SICK WITH RHEUMATISM', src:'https://www.fold3.com/example/0022'},
                {...G('deps','depo'), name:'EXAMPLE, MARY', rank:'', dep:'F', file:'Certificate number 000002', signs:'S', date:'05/10/1902', t1:'E', period:'A', desc:'HUSBAND OWNED A HOUSE AND LOT AT NORFOLK', src:'https://www.fold3.com/example/0056'}];
   Object.assign(r.personal.enslaved,{former:'Y',freed:'--/--/1862',freed_q:'1',at_enl:'F',how:'ESCAPED TO UNION LINES'});
-  return r;
+  return upgrade(r); // writes the short codes above as full text
 }

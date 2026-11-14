@@ -80,9 +80,20 @@ const ok = (cond, msg) => { results.push((cond ? '  ok   ' : '  FAIL ') + msg); 
     ok(yearOnly === '--/--/1899' && yearMonth === '04/--/1899' && !(await page.$eval(dpart('personal.death.date', 'y'), e => e.classList.contains('bad'))), 'a year-only or year-and-month date is stored with dashes and accepted');
   });
   await step('choosing a US state fills in the country', async () => {
-    await page.fill('[data-path="personal.death.state"]', 'VA');
+    await page.fill('[data-path="personal.death.state"]', 'virginia');
     await page.dispatchEvent('[data-path="personal.death.state"]', 'input');
-    ok((await page.inputValue('[data-path="personal.death.country"]')) === 'US' && (await page.evaluate(() => cur.personal.death.country)) === 'US', 'choosing a US state fills in the country');
+    await page.click('#main h1'); // leaving the box matches it to the list's spelling
+    const st = await page.evaluate(() => [cur.personal.death.state, cur.personal.death.country]);
+    await page.fill('[data-path="personal.death.county"]', 'x');
+    await page.fill('[data-path="personal.death.state"]', 'Narnia');
+    await page.dispatchEvent('[data-path="personal.death.state"]', 'input');
+    await page.click('#main h1');
+    const custom = await page.evaluate(() => [cur.personal.death.state, document.querySelector('[data-path="personal.death.state"]').classList.contains('custom')]);
+    await page.fill('[data-path="personal.death.state"]', 'va');
+    await page.dispatchEvent('[data-path="personal.death.state"]', 'input');
+    await page.click('#main h1');
+    const oldcode = await page.evaluate(() => cur.personal.death.state);
+    ok(st[0] === 'Virginia' && st[1] === 'United States' && custom[0] === 'Narnia' && custom[1] === true && oldcode === 'Virginia' && (await page.inputValue('[data-path="personal.death.country"]')) === 'United States', 'choosing a US state fills in the country');
   });
   await step('a source URL is checked and every row has one', async () => {
     await page.fill('[data-path="personal.death.src"]', 'not a url');
@@ -94,6 +105,7 @@ const ok = (cond, msg) => { results.push((cond ? '  ok   ' : '  FAIL ') + msg); 
   await step('sources: page label from the Fold3 address, extra sources, per-field source, address list', async () => {
     await page.click('nav [data-sec="personal"]');
     const u = 'https://www.fold3.com/image/259904703/example-person-page-10-us-civil-war-service-records-1';
+    await page.evaluate(() => { cur.personal.death.srcs = []; cur.personal.death.src_note = ''; renderMain(); }); // start from none (the example has some)
     await page.fill('[data-path="personal.death.src"]', u);
     await page.dispatchEvent('[data-path="personal.death.src"]', 'input');
     const label = await page.inputValue('[data-path="personal.death.src_note"]');
@@ -121,7 +133,7 @@ const ok = (cond, msg) => { results.push((cond ? '  ok   ' : '  FAIL ') + msg); 
     await page.click('nav [data-sec="meta"]');
     const kinds = await page.$$eval('[data-path^="meta.appfiles."][data-path$=".kind"]', els => els.map(e => e.value));
     const opts = await page.$$eval('[data-path="meta.appfiles.0.nara"] option', els => els.length);
-    ok(kinds.length >= 2 && kinds[0] === 'A' && kinds[1] === 'C' && opts === 5, 'file tab starts with an application row and a certificate row');
+    ok(kinds.length >= 2 && kinds[0] === 'Application number' && kinds[1] === 'Certificate number' && opts === 5, 'file tab starts with an application row and a certificate row');
   });
   await step('immigration can have several rows and depositions pick a file from File & tracking', async () => {
     await page.click('nav [data-sec="personal"]');

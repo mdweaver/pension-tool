@@ -21,11 +21,8 @@ function onInput(e){
   setPath(cur, path, v);
   if (f && f.t==='url') autoLabel(path, oldVal, v);
   if (f && (f.t==='url' || /(^|\.)(note|src_note)$/.test(path))){ clearTimeout(onInput.srcT); onInput.srcT=setTimeout(refreshSrcList,400); }
-  if (f && f.t==='code'){ const m=el.parentElement.querySelector('.meaning'); if (m) m.textContent = CODES[f.list][v]||''; }
-  if (f && f.cty && US_STATES.has(v)){ // a US state implies the country
-    const cp=path.split('.').slice(0,-1).concat(f.cty).join('.'); setPath(cur,cp,'US');
-    const ce=document.querySelector(`[data-path="${cp}"]`); if (ce) ce.value='US';
-  }
+  if (f && f.t==='code' && f.list==='QC'){ const m=el.parentElement.querySelector('.meaning'); if (m) m.textContent = CODES[f.list][v]||''; }
+  if (f && f.cty && US_STATES.has(v)) setCountry(path, f);
   markActive(); schedSave();
   if (path.startsWith('personal.names.0')||path.startsWith('meta.file.')) renderTop();
 }
@@ -39,14 +36,31 @@ function autoLabel(path, oldV, newV){
     const lab=srcLabel(newV); if (lab!==have){ row[nk]=lab; const el=document.querySelector(`[data-path="${rowPath}.${nk}"]`); if (el) el.value=lab; }
   }
 }
+/* a US state implies the country */
+function setCountry(path, f){
+  const cp=path.split('.').slice(0,-1).concat(f.cty).join('.'); setPath(cur,cp,COUNTRY_US);
+  const ce=document.querySelector(`[data-path="${cp}"]`); if (ce) ce.value=COUNTRY_US;
+}
+/* leaving a full-text box: match what was typed to a listed value ignoring case, and read an old short code
+   ("M", "VA") as its description, so the saved value is always the list's own spelling */
+function normCode(f, v){
+  const t=v.trim(); if (!t) return v;
+  const L=CODES[f.list]; if (t in L) return t;
+  const hit=Object.keys(L).find(k=>k.toLowerCase()===t.toLowerCase()); if (hit) return hit;
+  const old=Object.keys(LEGACY[f.list]).find(k=>k.toLowerCase()===t.toLowerCase()); return old ? LEGACY[f.list][old] : v;
+}
 function onBlur(e){
   const el=e.target; const path=el.dataset?.path; if (!path||!cur) return;
   const f=fieldForPath(path); if (!f) return;
+  if (f.t==='code' && f.list!=='QC' && el.tagName==='INPUT'){
+    const v=normCode(f, el.value);
+    if (v!==el.value){ el.value=v; setPath(cur, path, v); if (f.cty && US_STATES.has(v)) setCountry(path, f); markActive(); schedSave(); }
+  }
   const rowPath=path.split('.').slice(0,-1).join('.'); const row=getPath(cur,rowPath);
   const basePath = path.endsWith('_q') ? path.slice(0,-2) : path;
   const targets = [...document.querySelectorAll(`[data-path="${basePath}"]`)]; // a date has three boxes
   const ff = path.endsWith('_q') ? fieldForPath(basePath) : f;
-  if (targets.length && ff){ const res=checkField(ff, getPath(cur, basePath), row); for (const t of targets){ t.classList.toggle('bad', !!res && res.lvl==='err'); t.classList.toggle('warn', !!res && res.lvl==='warn'); } }
+  if (targets.length && ff){ const res=checkField(ff, getPath(cur, basePath), row); for (const t of targets){ t.classList.toggle('bad', !!res && res.lvl==='err'); t.classList.toggle('warn', !!res && res.lvl==='warn'); t.classList.toggle('custom', !!res && res.lvl==='note'); } }
   sideRefresh();
 }
 let ptrDown=false, sidePending=false;
@@ -164,6 +178,7 @@ document.addEventListener('click', async e=>{
   else if (act==='cf-copy'){ const t=JSON.stringify(pendingMine); navigator.clipboard?.writeText(t).then(()=>toast('Your version is on the clipboard'),()=>toast('Copy failed; use Export instead')); }
   else if (act==='import'){ $('#impfile').click(); }
   else if (act==='expall'){ exportMenu(true); }
+  else if (act==='customvals'){ showCustomValues(); }
   else if (act==='close'){ $('#modal').hidden=true; }
   else if (act==='copy'){ const ta=$('#modal textarea'); navigator.clipboard?.writeText(ta.value).then(()=>toast('Copied'),()=>{ ta.select(); toast('Press Ctrl+C to copy'); }); }
   else if (act==='dl'){ doExport(b.dataset.kind, b.dataset.scope==='all'); }
