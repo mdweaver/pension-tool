@@ -246,6 +246,14 @@ const BR  = {t:'br'};
 const U   = (k,l,w,o={}) => ({k,l,t:'url',w,...o});
 /* AF: a drop-down of the application / certificate numbers entered in File & tracking (meta.appfiles); stores the label, e.g. "Application number 12345" */
 const AF  = (k,l,o={}) => ({k,l,t:'appref',w:30,...o});
+/* Sources. Every block that holds data has a main Fold3 URL (src) with an optional page label (src_note), plus a list of
+   further sources (srcs). An entry in srcs with a blank field is another source for the whole entry; one with a field key
+   is a source for that single field (the small link icon beside the field). Both lists are stored sparsely: only what is used. */
+const SRCN = T('src_note','Page / label',14,{tag:'project',nocase:true,help:'Short name for this source, e.g. p. 14. It is filled in automatically when the Fold3 address contains a page number; type your own if it does not. It labels the source in the drop-down of sources used in this record.'});
+const SRCS = {t:'sub', k:'srcs', l:'More sources', empty:true, fields:[
+  T('field','Field',20,{tag:'project',nocase:true,help:'Which field of this entry the source is for. Blank means the whole entry.'}),
+  U('url','Source (Fold3 page URL)',52,{tag:'project',help:'The Fold3 web address of the page this came from. Pick one already used in this record from the drop-down, or paste a new one.'}),
+  T('note','Page / label',14,{tag:'project',nocase:true,help:'Short name for this source, e.g. p. 14. Filled in from the Fold3 address when it contains a page number; otherwise type your own.'}) ]};
 // Where something happened: address, city, county, state, country (filled with US when a US state is chosen), quality.
 // o.addr:false leaves out the address box for blocks that already have a street field.
 const US_STATES = new Set('AK AL AR AZ CA CO CT DC DE FL GA HI IA ID IL IN KS KY LA MA MD ME MI MN MO MS MT NC ND NE NH NJ NM NV NY OH OK OR PA RI SC SD TN TX UT VA VT WA WI WV WY US'.split(' '));
@@ -447,6 +455,11 @@ const SCHEMA = [
    Every block that holds data (not Remarks, not blocks marked nosrc, not hidden blocks unless marked keepsrc because the key was already
    saved) gets a Fold3 source URL on each row. */
 for (const sec of SCHEMA) if (!sec.hide) for (const g of sec.groups) if ((!g.hide || g.keepsrc) && !g.nosrc && g.id!=='rmk' && !g.id.endsWith('_rmk')) g.fields.push(BR, SRC);
+/* page label and list of further sources, for every visible block that has a source URL (and for the Applications & certificates list, whose rows have their own Fold3 URL) */
+for (const sec of SCHEMA) if (!sec.hide) for (const g of sec.groups) if (!g.hide){
+  if (g.fields.some(f=>f.k==='src') && !g.fields.some(f=>f.k==='src_note')) g.fields.push(SRCN);
+  if ((g.fields.some(f=>f.k==='src') || g.id==='appfiles') && !g.fields.some(f=>f.k==='srcs')) g.fields.push(SRCS);
+}
 const visSections = () => SCHEMA.filter(s => !s.hide);
 const visGroups = s => s.groups.filter(g => !g.hide);
 // Visible fields of a block; leading, trailing and doubled line breaks (left by hidden fields) are dropped.

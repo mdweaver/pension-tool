@@ -3,7 +3,7 @@ function onInput(e){
   const el=e.target;
   if (el.id==='listq'){ listQ=el.value; const pos=el.selectionStart; renderRecords(); const n=$('#listq'); n.focus(); try{n.setSelectionRange(pos,pos);}catch(_){} return; }
   const path=el.dataset.path; if (!path||!cur) return;
-  const f=fieldForPath(path); let v;
+  const f=fieldForPath(path); let v; const oldVal=getPath(cur,path);
   if (el.type==='checkbox') v = el.checked?'X':'';
   else if (f && f.t==='date' && el.dataset.dpart){
     const part=el.dataset.dpart, len=part==='y'?4:2;
@@ -15,10 +15,12 @@ function onInput(e){
   } else if (f && f.t==='url'){
     v=el.value.replace(/\s+/g,''); if (el.value!==v) el.value=v;
     const a=el.parentElement.querySelector('.srclink'); if (a){ const ok=/^https?:\/\//i.test(v); a.hidden=!ok; a.href=ok?v:'#'; }
-  } else if (f && f.t!=='area' && f.t!=='appref'){
+  } else if (f && f.t!=='area' && f.t!=='appref' && !f.nocase){
     const p=el.selectionStart; v=el.value.toUpperCase(); if (el.value!==v){ el.value=v; try{el.setSelectionRange(p,p);}catch(_){} }
   } else v=el.value;
   setPath(cur, path, v);
+  if (f && f.t==='url') autoLabel(path, oldVal, v);
+  if (f && (f.t==='url' || /(^|\.)(note|src_note)$/.test(path))){ clearTimeout(onInput.srcT); onInput.srcT=setTimeout(refreshSrcList,400); }
   if (f && f.t==='code'){ const m=el.parentElement.querySelector('.meaning'); if (m) m.textContent = CODES[f.list][v]||''; }
   if (f && f.cty && US_STATES.has(v)){ // a US state implies the country
     const cp=path.split('.').slice(0,-1).concat(f.cty).join('.'); setPath(cur,cp,'US');
@@ -26,6 +28,16 @@ function onInput(e){
   }
   markActive(); schedSave();
   if (path.startsWith('personal.names.0')||path.startsWith('meta.file.')) renderTop();
+}
+/* fill the page label from the Fold3 address when it carries a page number ("…-page-10-…" gives "p. 10");
+   leave a label the person typed alone, and leave it empty (for them to type) when the address has no page number */
+function autoLabel(path, oldV, newV){
+  const ks=path.split('.'); const last=ks.pop(); const rowPath=ks.join('.'); const row=getPath(cur,rowPath); if (!row) return;
+  const nk = last==='url' ? 'note' : last==='src' ? 'src_note' : null; if (!nk || !(nk in row)) return;
+  const have=String(row[nk]||'').trim();
+  if (have==='' || have===srcLabel(oldV||'')){
+    const lab=srcLabel(newV); if (lab!==have){ row[nk]=lab; const el=document.querySelector(`[data-path="${rowPath}.${nk}"]`); if (el) el.value=lab; }
+  }
 }
 function onBlur(e){
   const el=e.target; const path=el.dataset?.path; if (!path||!cur) return;
@@ -69,7 +81,7 @@ async function saveNow(force){
   if (!cur || saving || curMeta.deleted) return;
   if (!dirty && !curMeta.isNew && !force){ toast('No changes to save'); return; }
   saving=true; renderSaveState();
-  const payload=JSON.parse(JSON.stringify(cur));
+  const payload=prunedCopy(cur);
   try {
     const res = await API.save(cur._uid, payload, curMeta.isNew ? 0 : curMeta.version);
     if (res && res.ok){
@@ -93,7 +105,7 @@ async function openRec(uid, toSec){
     const r = await API.get(uid);
     cur = upgrade(r.data); cur._uid = uid;
     curMeta = {version:r.version, isNew:false, created_by_name:r.created_by_name, created_at:r.created_at, updated_by_name:r.updated_by_name, updated_at:r.updated_at, deleted:!!r.deleted_at};
-    dirty=false; staleDraft=null;
+    dirty=false; staleDraft=null; openFsrc.clear();
     const d=loadDraft(uid);
     if (d && d.data){
       if (d.base===r.version){ cur=upgrade(d.data); cur._uid=uid; dirty=true; toast('Brought back your unsaved changes from '+fmtTime(d.at)); }
@@ -111,7 +123,7 @@ function openDraft(uid){
 }
 async function startNew(){
   if (cur && dirty){ await saveNow(); if (dirty) return; }
-  cur=newRecord(); curMeta={version:0, isNew:true}; dirty=false; staleDraft=null;
+  cur=newRecord(); curMeta={version:0, isNew:true}; dirty=false; staleDraft=null; openFsrc.clear();
   view='edit'; curSec='meta'; renderAll(); setTimeout(()=>document.getElementById('f-meta-file-sailor_id')?.focus(),20);
 }
 
@@ -126,6 +138,13 @@ document.addEventListener('click', async e=>{
   if (act==='add'){ const [sid,gid]=path.split('.'); const g=secById(sid).groups.find(x=>x.id===gid); cur[sid][gid].push(blankFields(g.fields)); schedSave(); renderMain(); const rows=document.querySelectorAll(`#g-${sid}-${gid} .row`); rows[rows.length-1]?.querySelector('input,textarea,select')?.focus(); }
   else if (act==='del'){ arm(b, path, 'Confirm', ()=>{ const ks=path.split('.'); const arr=cur[ks[0]][ks[1]]; arr.splice(+ks[2],1); if (!arr.length){ const g=secById(ks[0]).groups.find(x=>x.id===ks[1]); arr.push(blankFields(g.fields)); } schedSave(); renderMain(); renderNav(); refreshChecks(); }); }
   else if (act==='sort'){ const [sid,gid]=path.split('.'); const k=b.dataset.key; const arr=cur[sid][gid]; const blanks=arr.filter(isBlank); const filled=arr.filter(r=>!isBlank(r)).sort((a,b2)=>dateKey(a[k]).localeCompare(dateKey(b2[k]))); cur[sid][gid]=[...filled,...blanks]; schedSave(); renderMain(); toast('Sorted by date'); }
+  else if (act==='addsrc'){ const row=getPath(cur,path); row.srcs.push({field:b.dataset.field||'', url:'', note:''}); schedSave(); renderMain(); document.getElementById(idOf(`${path}.srcs.${row.srcs.length-1}.url`))?.focus(); }
+  else if (act==='delsrc'){ const ks=path.split('.'); const idx=+ks.pop(); getPath(cur,ks.join('.')).splice(idx,1); schedSave(); renderMain(); }
+  else if (act==='fsrc'){ const key=path+'|'+b.dataset.fkey, row=getPath(cur,path);
+    if (openFsrc.has(key)) openFsrc.delete(key);
+    else { openFsrc.add(key); if (!row.srcs.some(x=>x.field===b.dataset.fkey)){ row.srcs.push({field:b.dataset.fkey, url:'', note:''}); schedSave(); } }
+    renderMain();
+    if (openFsrc.has(key)){ const mine=row.srcs.map((x,i)=>[x,i]).filter(([x])=>x.field===b.dataset.fkey); const pick=mine.find(([x])=>isBlank(x.url))||mine[0]; if (pick) document.getElementById(idOf(`${path}.srcs.${pick[1]}.url`))?.focus(); } }
   else if (act==='addsub'){ const arr=getPath(cur,path); const sub=SCHEMA.find(s=>s.id==='apps').groups[0].fields.find(x=>x.t==='sub'); arr.push(blankFields(sub.fields)); schedSave(); renderMain(); }
   else if (act==='delsub'){ const ks=path.split('.'); const idx=+ks.pop(); const arr=getPath(cur,ks.join('.')); arr.splice(idx,1); if (!arr.length){ const sub=SCHEMA.find(s=>s.id==='apps').groups[0].fields.find(x=>x.t==='sub'); arr.push(blankFields(sub.fields)); } schedSave(); renderMain(); }
   else if (act==='goto'){ goSec(b.dataset.secid); setTimeout(()=>{ const el=document.getElementById('f-'+path.replace(/\./g,'-')); if (el){ el.scrollIntoView({block:'center'}); el.focus(); } }, 30); }

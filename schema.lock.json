@@ -53,6 +53,20 @@
       },
       "url": {
        "type": "url"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -83,6 +97,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -143,6 +174,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -185,6 +233,23 @@
       },
       "contraband_src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -207,6 +272,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -272,6 +354,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -302,6 +401,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -361,6 +477,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -420,6 +553,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -460,6 +610,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -483,6 +650,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -528,6 +712,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -616,6 +817,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -687,6 +905,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -702,6 +937,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -744,6 +996,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -762,6 +1031,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -781,6 +1067,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -803,6 +1106,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -818,6 +1138,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -846,6 +1183,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -909,6 +1263,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -928,6 +1299,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -949,6 +1337,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -994,6 +1399,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -1009,6 +1431,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -1038,6 +1477,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -1091,6 +1547,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -1110,6 +1583,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -1127,6 +1617,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -1148,6 +1655,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -1193,6 +1717,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -1327,6 +1868,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     },
@@ -1385,6 +1943,23 @@
       },
       "src": {
        "type": "url"
+      },
+      "src_note": {
+       "type": "text"
+      },
+      "srcs": {
+       "type": "sub",
+       "fields": {
+        "field": {
+         "type": "text"
+        },
+        "url": {
+         "type": "url"
+        },
+        "note": {
+         "type": "text"
+        }
+       }
       }
      }
     }

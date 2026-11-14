@@ -6,7 +6,7 @@ function sget(k){ try { return localStorage.getItem(k); } catch(e){ storageOK=fa
 function sset(k,v){ try { localStorage.setItem(k,v); return true; } catch(e){ storageOK=false; return false; } }
 function sdel(k){ try { localStorage.removeItem(k); } catch(e){} }
 
-function blankFields(fields){ const o={}; for (const f of fields){ if (f.t==='br') continue; if (f.t==='sub'){ o[f.k]=[blankFields(f.fields)]; continue; } o[f.k]=''; if (f.t==='date' && f.q) o[f.k+'_q']=''; } return o; }
+function blankFields(fields){ const o={}; for (const f of fields){ if (f.t==='br') continue; if (f.t==='sub'){ o[f.k]=f.empty ? [] : [blankFields(f.fields)]; continue; } o[f.k]=''; if (f.t==='date' && f.q) o[f.k+'_q']=''; } return o; }
 /* the rows a repeatable block starts with: one blank row, or the block's own defaults (g.init) */
 function blankRows(g){ return g.init ? g.init.map(o=>Object.assign(blankFields(g.fields),o)) : [blankFields(g.fields)]; }
 /* a row is blank if everything except pre-filled fields (g.ignore) is empty */
@@ -56,6 +56,15 @@ function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; cle
 function getPath(obj, path){ return path.split('.').reduce((o,k)=> o==null?o:o[k], obj); }
 function setPath(obj, path, val){ const ks=path.split('.'); let o=obj; for (let i=0;i<ks.length-1;i++) o=o[ks[i]]; o[ks[ks.length-1]]=val; }
 function secById(id){ return SCHEMA.find(s=>s.id===id); }
-function isBlank(o){ if (o==null) return true; if (typeof o==='string') return o.trim()===''; if (Array.isArray(o)) return o.every(isBlank); return Object.entries(o).every(([k,v])=> k==='_' || isBlank(v)); }
+function isBlank(o){ if (o==null) return true; if (typeof o==='string') return o.trim()===''; if (Array.isArray(o)) return o.every(isBlank);
+  if ('url' in o && 'note' in o && 'field' in o) return isBlank(o.url) && isBlank(o.note); /* a source entry: blank unless it has a URL or label, even though it names a field */
+  return Object.entries(o).every(([k,v])=> k==='_' || isBlank(v)); }
 function recName(r){ const n=(r.personal.names[0]||{}).name; return n && n.trim() ? n : '(no name yet)'; }
 function dateKey(v){ if (!v) return '99999999'; const m=v.match(/^(..)\/(..)\/(....)$/); if(!m) return '99999999'; return m[3].replace(/-/g,'0')+m[1].replace(/-/g,'0')+m[2].replace(/-/g,'0'); }
+
+/* a copy of a record without empty source entries (the blank ones left by clicking "add" and not typing) */
+function prunedCopy(r){
+  const c=JSON.parse(JSON.stringify(r));
+  const walk=o=>{ if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o==='object'){ if (Array.isArray(o.srcs)) o.srcs=o.srcs.filter(e=>!isBlank(e)); for (const k in o) if (k!=='srcs') walk(o[k]); } };
+  walk(c); return c;
+}

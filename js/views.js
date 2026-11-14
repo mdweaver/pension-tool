@@ -51,6 +51,7 @@ function renderMain(){
   const VS=visSections(), i=VS.indexOf(s);
   h+=`<div class="tools" style="margin-top:6px">${i>0?`<button class="btn" data-sec="${VS[i-1].id}" type="button">← ${esc(VS[i-1].title)}</button>`:''}${i<VS.length-1?`<button class="btn" data-sec="${VS[i+1].id}" type="button">${esc(VS[i+1].title)} →</button>`:''}<button class="btn primary" data-act="save" type="button">Save</button></div>`;
   $('#main').innerHTML=h;
+  refreshSrcList();
 }
 
 /* ---------- sign-in ---------- */

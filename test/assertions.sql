@@ -110,4 +110,10 @@ reset role;
 set role authenticated; select set_config('request.jwt.claim.sub', :'stranger', false);
 select testkit.ok(testkit.visible('select 1 from records') = 0 and testkit.visible('select 1 from record_versions') = 0, 'an account nobody activated sees nothing');
 reset role;
+-- extra sources in a one-off block and in a repeat block show up as subgroup / subrow
+set role authenticated; select set_config('request.jwt.claim.sub', :'admin', false);
+select save_record('rtest002', '{"_uid":"rtest002","meta":{"file":{"sailor_id":"S-2"}},"personal":{"death":{"srcs":[{"field":"date","url":"https://x/1","note":"p. 1"},{"field":"","url":"https://x/2","note":""}]},"names":[{"name":"A","srcs":[{"field":"","url":"https://x/3","note":""}]}]}}', 0);
+select testkit.ok((select count(*) from record_fields where record_uid = 'rtest002' and "group" = 'death' and subgroup = 'srcs' and field = 'url' and subrow in (1,2)) = 2, 'record_fields numbers extra sources in one-off blocks');
+select testkit.ok(exists (select 1 from record_fields where record_uid = 'rtest002' and "group" = 'names' and "row" = 1 and subgroup = 'srcs' and subrow = 1 and field = 'url'), 'record_fields numbers extra sources in repeat blocks');
+reset role;
 \echo ALL DATABASE ASSERTIONS PASSED

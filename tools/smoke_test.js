@@ -91,6 +91,32 @@ const ok = (cond, msg) => { results.push((cond ? '  ok   ' : '  FAIL ') + msg); 
     const hasSrc = await page.evaluate(() => visSections().every(s => visGroups(s).every(g => g.id === 'rmk' || g.id.endsWith('_rmk') || g.nosrc || g.fields.some(f => f.k === 'src'))));
     ok(msg && msg.lvl === 'err' && hasSrc, 'a source URL is checked and every row has one');
   });
+  await step('sources: page label from the Fold3 address, extra sources, per-field source, address list', async () => {
+    await page.click('nav [data-sec="personal"]');
+    const u = 'https://www.fold3.com/image/259904703/example-person-page-10-us-civil-war-service-records-1';
+    await page.fill('[data-path="personal.death.src"]', u);
+    await page.dispatchEvent('[data-path="personal.death.src"]', 'input');
+    const label = await page.inputValue('[data-path="personal.death.src_note"]');
+    await page.fill('[data-path="personal.death.src"]', 'https://www.fold3.com/file/56832385');
+    await page.dispatchEvent('[data-path="personal.death.src"]', 'input');
+    const cleared = await page.inputValue('[data-path="personal.death.src_note"]');
+    await page.fill('[data-path="personal.death.src_note"]', 'by hand');
+    await page.dispatchEvent('[data-path="personal.death.src_note"]', 'input');
+    await page.click('[data-act=addsrc][data-path="personal.death"]');
+    await page.fill('[data-path="personal.death.srcs.0.url"]', u);
+    await page.dispatchEvent('[data-path="personal.death.srcs.0.url"]', 'input');
+    const extra = await page.inputValue('[data-path="personal.death.srcs.0.note"]');
+    await page.click('[data-act=addsrc][data-path="personal.death"]');
+    await page.click('[data-act=fsrc][data-path="personal.death"][data-fkey="cause"]');
+    const panel = await page.$$eval('[data-path^="personal.death.srcs."][data-path$=".url"]', els => els.length);
+    await page.fill('[data-path="personal.death.srcs.2.url"]', 'https://www.fold3.com/image/1-page-3-x');
+    await page.dispatchEvent('[data-path="personal.death.srcs.2.url"]', 'input');
+    await page.waitForTimeout(500);
+    const listed = await page.$$eval('#dl-SRCS option', els => els.length);
+    const pruned = await page.evaluate(() => { const c = prunedCopy(cur).personal.death.srcs; return [c.length, c[0].url, c[1] && c[1].field]; });
+    ok(label === 'p. 10' && cleared === '' && extra === 'p. 10' && panel >= 3 && listed >= 2 && pruned[0] === 2 && pruned[1] === u && pruned[2] === 'cause',
+      'sources: page label from the Fold3 address, extra sources, per-field source, address list');
+  });
   await step('file tab starts with an application row and a certificate row', async () => {
     await page.click('nav [data-sec="meta"]');
     const kinds = await page.$$eval('[data-path^="meta.appfiles."][data-path$=".kind"]', els => els.map(e => e.value));
